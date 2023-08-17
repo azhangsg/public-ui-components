@@ -5,6 +5,10 @@ on:
       package:
         # when not specified will cleanup all the packages
         description: Package to cleanup PR preview versions
+        default: "@kong-ui-public/analytics-chart"
+  push:
+    branches:
+      - feat/KHCP-7885_cleanup-timeframe-2
 
   schedule:
     - cron: '0 1/4 * * 6,0'
@@ -64,7 +68,7 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN_PUBLIC_PUBLISH }}" > .npmrc
 
       - name: Cleanup PR preview
-        uses: Kong/public-shared-actions/pr-previews/cleanup@main
+        uses: Kong/public-shared-actions/pr-previews/cleanup@feat/KHCP-7885_cleanup-timeframe-2
         with:
           package: ${{matrix.package}}
           openPRs: ${{ needs.prepare.outputs.openPRs }}
