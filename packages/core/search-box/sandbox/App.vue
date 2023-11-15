@@ -2,7 +2,7 @@
   <div class="sandbox-container">
     <main>
       <p>This is the component sandbox.</p>
-      <SearchBox
+      <!-- <SearchBox
         :searchIn="[
           {
             label: 'All',
@@ -30,11 +30,13 @@
             selected: false,
           },
         ]"
-      />
+      /> -->
+      <playGround />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { SearchBox } from '../src'
+//import { SearchBox } from '../src'
+import playGround from './playground.vue'
 </script>
