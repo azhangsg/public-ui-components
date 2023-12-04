@@ -1,6 +1,6 @@
 /* eslint-env node */
 require('@rushstack/eslint-patch/modern-module-resolution')
-const kongponentsUtilityClasses = require('./utilities/disallowed-utility-classes')
+const kongponentsUtilityClasses = require('./utilities/disallowed-utility-classes.cjs')
 
 module.exports = {
   root: true,
@@ -22,7 +22,7 @@ module.exports = {
     indent: 'off',
     semi: ['error', 'never'],
     'space-before-function-paren': 'off',
-    quotes: ['error', 'single', {avoidEscape: true}],
+    quotes: ['error', 'single', { avoidEscape: true }],
     'no-multi-spaces': 'error',
     'no-unused-vars': 'off',
     'no-trailing-spaces': 'error',

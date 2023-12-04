@@ -1,5 +1,6 @@
 import sharedViteConfig, { getApiProxies, sanitizePackageName } from '../../../vite.config.shared'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { defineConfig, mergeConfig } from 'vite'
 
 // Package name MUST always match the kebab-case package name inside the component's package.json file and the name of your `/packages/{package-name}` directory
@@ -15,7 +16,7 @@ const config = mergeConfig(
         // The kebab-case name of the exposed global variable. MUST be in the format `kong-ui-public-{package-name}`
         // Example: name: 'kong-ui-public-demo-component'
         name: `kong-ui-public-${sanitizedPackageName}`,
-        entry: resolve(__dirname, './src/index.ts'),
+        entry: resolve(fileURLToPath(dirname(import.meta.url)), './src/index.ts'),
         fileName: (format) => `${sanitizedPackageName}.${format}.js`,
       },
     },

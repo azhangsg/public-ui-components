@@ -7,7 +7,8 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import dns from 'dns'
-import path, { join } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 // You can set dns.setDefaultResultOrder('verbatim') to disable the reordering behavior. Vite will then print the address as localhost
@@ -17,7 +18,7 @@ dns.setDefaultResultOrder('verbatim')
 // Include the rollup-plugin-visualizer if the BUILD_VISUALIZER env var is set to "true"
 const buildVisualizerPlugin = process.env.BUILD_VISUALIZER
   ? visualizer({
-    filename: path.resolve(__dirname, `packages/${process.env.BUILD_VISUALIZER}/bundle-analyzer/stats-treemap.html`),
+    filename: resolve(fileURLToPath(dirname(import.meta.url)), `packages/${process.env.BUILD_VISUALIZER}/bundle-analyzer/stats-treemap.html`),
     template: 'treemap', // sunburst|treemap|network
     sourcemap: true,
     gzipSize: true,
@@ -49,7 +50,7 @@ export default defineConfig({
     // Use this option to force Vite to always resolve listed dependencies to the same copy (from project root)
     dedupe: ['vue', 'vue-router', '@kong/kongponents'],
     alias: {
-      '@entities-shared-sandbox': path.resolve(__dirname, 'packages/entities/entities-shared/sandbox/shared'),
+      '@entities-shared-sandbox': resolve(fileURLToPath(dirname(import.meta.url)), 'packages/entities/entities-shared/sandbox/shared'),
     },
   },
   css: {
