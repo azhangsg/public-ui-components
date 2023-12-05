@@ -6,7 +6,6 @@
     @change="onchange"
     @keyup="onchange"
   >
-  <SearchBar />
   <datalist id="queries">
     <option v-for="item in items">
       {{ item }}
@@ -67,7 +66,7 @@
 import { ref } from 'vue'
 import { ParseTreeWalker, CharStream, CommonTokenStream } from 'antlr4'
 import eL from './error-listener'
-/*
+
 import { KQueryParser, KQueryLexer, KQueryParserListener } from '@kong/kquery-parser'
 
 import type {
@@ -80,22 +79,6 @@ import type {
   ExclusionContext,
   GroupingContext,
 } from '@kong/kquery-parser'
-*/
-
-import KQueryParser from '../antlr4/new/KQueryParser'
-import KQueryLexer from '../antlr4/new/KQueryLexer'
-import KQueryParserListener from '../antlr4/new/KQueryParserListener'
-
-import type {
-  UnionContext,
-  FieldValueContext,
-  FieldNameContext,
-  ClauseContext,
-  EntityClauseContext,
-  IntersectionContext,
-  ExclusionContext,
-  GroupingContext,
-} from '../antlr4/new/KQueryParser'
 
 const kqueryCode = ref<string>('')
 const fieldValues = ref<string>('')
