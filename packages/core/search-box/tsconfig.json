@@ -14,10 +14,11 @@
   },
   "include": [
     "src/**/*",
-    "sandbox/**/*"
+    "sandbox/**/*",
   ],
   "exclude": [
     "node_modules",
+    "antlr4",
     "dist"
   ]
 }

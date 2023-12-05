@@ -1,78 +1,89 @@
 <template>
   <div class="kong-ui-public-search-box">
-    <SearchDropdownMenu
-      v-if="searchIn.length > 0"
-      class="dropdown-search-filter"
-      data-testid="search-dropdown-toggle"
-      :options="searchIn"
-      @change="changeSearchOption"
-    />
-
     <div class="seatch-terms-contaner">
       <button class="search-start-btn">
-        <KIcon icon="search" size="24px" />
+        <KIcon
+          icon="search"
+          size="24px"
+        />
       </button>
 
-      <div  v-if="searchType=='pretty'"
-        class="search-terms pretty">
+      <div
+        v-if="searchType=='pretty'"
+        class="search-terms pretty"
+      >
         <div class="term-container">
-            Country(2 terms)
+          Country(2 terms)
         </div>
         <div class="term-container">
           State(2 terms)
         </div>
-          <div class="term-container">
-              Country(2 terms)
-          </div>
-          <div class="term-container">
-            State(2 terms)
-          </div>
-          <div class="term-container">
-              Country(2 terms)
-          </div>
-          <div class="term-container">
-            State(2 terms)
-          </div>
-          <div class="term-container">
-              Country(2 terms)
-          </div>
-          <div class="term-container">
-            State(2 terms)
-          </div>
-          <div class="empty pretty" contenteditable="true"></div>
+        <div class="term-container">
+          Country(2 terms)
+        </div>
+        <div class="term-container">
+          State(2 terms)
+        </div>
+        <div class="term-container">
+          Country(2 terms)
+        </div>
+        <div class="term-container">
+          State(2 terms)
+        </div>
+        <div class="term-container">
+          Country(2 terms)
+        </div>
+        <div class="term-container">
+          State(2 terms)
+        </div>
+        <div
+          class="empty pretty"
+          contenteditable="true"
+        />
       </div>
 
       <div
         v-if="searchType == 'plain'"
-        class="search-terms plain">
-          <span
-            class="empty plain"
-            contenteditable="true"
-            @blur="plainOnInput"
-            placeholder="Add search criteria...">
-            {{ searchTerms }}
+        class="search-terms plain"
+      >
+        <span
+          class="empty plain"
+          contenteditable="true"
+          placeholder="Add search criteria..."
+          @blur="plainOnInput"
+        >
+          {{ searchTerms }}
         </span>
       </div>
       <button
         v-if="searchTerms != ''"
         class="search-for-clear-btn"
         :onclick="clearSearchTerms"
-        >
-          <KIcon icon="errorFilled" size="22"/>
+      >
+        <KIcon
+          icon="errorFilled"
+          size="22"
+        />
       </button>
     </div>
     <button
       class="search-field-type-btn"
-      :onclick="changeSearchType">
-          <KIcon :icon="searchType === 'plain' ? 'serviceDocument': 'filter' " size="22"/>
+      :onclick="changeSearchType"
+    >
+      <KIcon
+        :icon="searchType === 'plain' ? 'serviceDocument': 'filter' "
+        size="22"
+      />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+
+// @ts-nocheck
 import type { PropType } from 'vue'
-import {ref} from 'vue'
-import SearchDropdownMenu from './SearchDropdownMenu.vue'
+import { ref } from 'vue'
+// import SearchDropdownMenu from './SearchDropdownMenu.vue'
 import type { DropdownItem } from '@kong/kongponents'
 import type { SearchTerms } from '../types'
 import composables from '../composables'
@@ -106,7 +117,6 @@ const plainOnInput = (e: any) => {
   console.log(e)
   setSearchTerms(e.data === null ? '' : e.target.innerText)
 }
-
 
 </script>
 

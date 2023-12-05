@@ -37,6 +37,6 @@
 </template>
 
 <script setup lang="ts">
-//import { SearchBox } from '../src'
+// import { SearchBox } from '../src'
 import playGround from './playground.vue'
 </script>

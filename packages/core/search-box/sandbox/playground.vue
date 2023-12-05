@@ -67,7 +67,7 @@
 import { ref } from 'vue'
 import { ParseTreeWalker, CharStream, CommonTokenStream } from 'antlr4'
 import eL from './error-listener'
-
+/*
 import { KQueryParser, KQueryLexer, KQueryParserListener } from '@kong/kquery-parser'
 
 import type {
@@ -80,11 +80,11 @@ import type {
   ExclusionContext,
   GroupingContext,
 } from '@kong/kquery-parser'
+*/
 
-/*
-import KQueryParser from '../src/antlr4/new/KQueryParser'
-import KQueryLexer from '../src/antlr4/new/KQueryLexer'
-import KQueryParserListener from '../src/antlr4/new/KQueryParserListener'
+import KQueryParser from '../antlr4/new/KQueryParser'
+import KQueryLexer from '../antlr4/new/KQueryLexer'
+import KQueryParserListener from '../antlr4/new/KQueryParserListener'
 
 import type {
   UnionContext,
@@ -95,8 +95,7 @@ import type {
   IntersectionContext,
   ExclusionContext,
   GroupingContext,
-} from '../src/antlr4/new/KQueryParser'
-*/
+} from '../antlr4/new/KQueryParser'
 
 const kqueryCode = ref<string>('')
 const fieldValues = ref<string>('')
@@ -318,3 +317,4 @@ const onchange = (ev) => {
   }
 }
 </style>
+../antlr4/new/KQueryParser../antlr4/new/KQueryLexer../antlr4/new/KQueryParserListener../antlr4/new/KQueryParser

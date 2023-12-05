@@ -3,7 +3,6 @@ import { ref } from 'vue'
 export default function useSearchTerms() {
   const searchTerms = ref<string>('')
 
-
   const setSearchTerms = (terms: string) => {
     searchTerms.value = terms
   }
@@ -13,7 +12,7 @@ export default function useSearchTerms() {
   }
 
   const parseTerms = () => {
-    let ii = 0;
+    let ii = 0
     let inDoubleQotes = false
 
     const getNextChar = (i: number) => {
@@ -24,13 +23,12 @@ export default function useSearchTerms() {
           inDoubleQotes = !inDoubleQotes
         }
         if (c !== ' ' || inDoubleQotes) {
-          return {i, c}
+          return { i, c }
         }
         i++
       }
-      return {i, c: ''}
+      return { i, c: '' }
     }
-
 
     const parseFieldValues = (i: number, field:string): number => {
       let values = ''
@@ -47,7 +45,7 @@ export default function useSearchTerms() {
         console.log({ step: 'parseFieldValues', i, char: n.c, field, values, inDoubleQotes })
         i++
 
-        if (( inBrakets && n.c === ')') || (!inBrakets && n.c === ' ' && !inDoubleQotes)) {
+        if ((inBrakets && n.c === ')') || (!inBrakets && n.c === ' ' && !inDoubleQotes)) {
           return i
         }
       }
@@ -59,7 +57,7 @@ export default function useSearchTerms() {
       while (i < searchTerms.value.length) {
         const n = getNextChar(i)
         i = n.i
-        if (n.c === ':' || n.c === '=' ) {
+        if (n.c === ':' || n.c === '=') {
           return parseFieldValues(++i, field)
         }
         field = field + n.c
@@ -76,13 +74,13 @@ export default function useSearchTerms() {
         console.log({ step: 'parseTerm', i, char: n.c })
         i = parseField(i)
       }
-      return i;
+      return i
     }
 
     while (ii < searchTerms.value.length) {
       const n = getNextChar(ii)
       ii = n.i
-      console.log({step: 'main', i: ii, char: n.c})
+      console.log({ step: 'main', i: ii, char: n.c })
       ii = parseTerm(ii)
     }
   }
@@ -90,6 +88,6 @@ export default function useSearchTerms() {
   return {
     getSearchTerms,
     setSearchTerms,
-    parseTerms
+    parseTerms,
   }
 }
