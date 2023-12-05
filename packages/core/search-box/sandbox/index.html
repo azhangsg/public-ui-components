@@ -8,13 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="/assets/wasm_exec.js"></script>
-    <script>
-      const go = new Go();
-      WebAssembly.instantiateStreaming(fetch("/assets/json.wasm"), go.importObject).then((result) => {
-        go.run(result.instance);
-      });
-    </script>
 
     <style>
       html,
