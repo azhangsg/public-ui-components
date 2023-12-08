@@ -1,4 +1,4 @@
-import type { KQueryTermTypes } from '../enums'
+import type { KQueryTermTypes, SuggestionTypes } from '../enums'
 
 export type KQueryParserError = {
   message: string
@@ -13,4 +13,10 @@ export type KQueryTerm = {
   termValue?: string
   children?: KQueryTerm[]
   parent?: number
+}
+
+export type SearchSuggestion = {
+  value: string
+  label: string
+  type?: SuggestionTypes
 }

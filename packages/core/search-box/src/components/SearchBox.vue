@@ -64,9 +64,10 @@
 
 // @ts-nocheck
 import type { PropType } from 'vue'
-import { ref, computed, defineEmits, nextTick, onMounted, watch } from 'vue'
-import { SearchEntryTypes } from '../enums'
+import { ref, computed, onMounted } from 'vue'
+import { SearchEntryTypes, SuggestionTypes } from '../enums'
 import composables from '../composables'
+import type { SearchSuggestion } from '../types'
 import { ListIcon, TableIcon } from '@kong/icons'
 import PlainSearchFiled from './PlainSearchFiled.vue'
 import PrettySearchFiled from './PrettySearchField.vue'
@@ -96,15 +97,15 @@ const fieldNames = ref<string[]>([])
 
 const { searchTermsString, parse, parserError, searchTerms } = composables.useKQueryParser()
 
-const suggestionItems = computed(() => {
+const suggestionItems = computed((): Array<SearchSuggestion> => {
   const entityFields = fieldNames.value
 
   return [
     ...(
-      searchTermsString.value.trim().endsWith(':') ? [] : entityFields.reduce((a, b) => { a.push({ label: b + ':', value: b + ':', type: 'fields' }); return a }, [])
+      searchTermsString.value.trim().endsWith(':') ? [] : entityFields.reduce((a, b) => { a.push({ label: b + ':', value: b + ':', type: SuggestionTypes.fieldName }); return a }, [])
     ),
     ...(recentSearches.value.length > 0 ? [{ label: 'RECENT SEARCHES', disabled: true }] : []),
-    ...recentSearches.value.reduce((a, b) => { a.push({ label: b, value: b, type: 'recent' }); return a }, []),
+    ...recentSearches.value.reduce((a, b) => { a.push({ label: b, value: b, type: SuggestionTypes.recent }); return a }, []),
   ]
 })
 
@@ -143,24 +144,24 @@ onMounted(async () => {
 
 .danger {
   background-color: red;
-  padding: 20px;
   margin-top: 20px;
+  padding: 20px;
 }
 .kong-ui-public-search-box {
+  align-items: stretch;
+  align-items: center;
+  display: flex;
   // Add component styles as needed
   flex-direction: row;
-  align-items: stretch;
-  display: flex;
-  align-items: center;
   justify-content: center;
 
   .search-terms-contaner {
+    align-items: center;
+    border: 1px solid gray;
     display: flex;
     flex-direction: row;
-    border: 1px solid gray;
-    width:100%;
-    align-items: center;
     justify-content: center;
+    width:100%;
 
     .query-suggestions {
       width: 100%;
@@ -168,8 +169,8 @@ onMounted(async () => {
         max-height: 260px;
         overflow-y: auto;
         li button  {
-          padding-top: 4px;
           padding-bottom: 4px;
+          padding-top: 4px;
           span {
             font-weight: normal;
           }
@@ -186,28 +187,28 @@ onMounted(async () => {
       // }
 
       .search-start-btn {
-      display: flex;
       align-items: center;
-      height: 44px;
-      border: 0px;
       background-color: transparent;
+      border: 0px;
+      display: flex;
+      height: 44px;
     }
 
     .search-for-clear-btn {
-      margin-left: 10px;
-      border: 0;
-      padding-top:4px;
       background-color: transparent;
+      border: 0;
+      margin-left: 10px;
+      padding-top:4px;
     }
   }
 
   .search-field-type-btn {
-     margin-left: auto;
-     height: 46px;
      border:1px solid gray;
+     border-bottom-right-radius: 6px;
      border-left:0px;
      border-top-right-radius: 6px;
-     border-bottom-right-radius: 6px;
+     height: 46px;
+     margin-left: auto;
      min-width:40px
   }
 }

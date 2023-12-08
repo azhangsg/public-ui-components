@@ -15,13 +15,13 @@
 <script setup lang="ts">
 import type { PropType } from 'vue'
 
-import { getCursorPosition, setCursorPosition } from '../utils'
-import { ref, nextTick, onMounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import SearchTerm from './SearchTerm.vue'
 import type { KQueryTerm } from './../types'
 
 const props = defineProps({
   suggestion: {
+    type: Object,
     default: null,
   },
   searchTerms: {
@@ -30,40 +30,19 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['search-terms-changed'])
+// const emit = defineEmits(['search-terms-changed'])
 
-const plainInput = ref(null)
+// const plainInput = ref(null)
 
-const plainOnInput = (e: any) => {
-  emit('search-terms-changed', e === null ? '' : e.target.innerText)
-}
+// const plainOnInput = (e: any) => {
+//   emit('search-terms-changed', e === null ? '' : e.target.innerText)
+// }
 
-const setFieldValue = async (item) => {
+const setFieldValue = async (item: any) => {
   if (!item) {
     return
   }
-  return
   console.log('suggestion:', item)
-  const cursorPosition = getCursorPosition(plainInput.value)
-  console.log('cursorPosition:', cursorPosition)
-
-  let newV = ''
-  let newCursorPosition = 0
-  if (item.type === 'recent') {
-    newV = item.value
-    newCursorPosition = item.value.length
-  } else {
-    const searchTermsArr = plainInput.value.innerText.split('')
-    searchTermsArr.splice(cursorPosition, 0, (cursorPosition === 0 ? '' : ' ') + item.value + ' ')
-    newV = searchTermsArr.join('')
-    newCursorPosition = cursorPosition + 1 + item.value.length
-  }
-  plainInput.value.innerText = newV
-
-  emit('search-terms-changed', newV)
-
-  await nextTick()
-  setCursorPosition(plainInput.value, newCursorPosition)
 }
 
 watch(() => (props.suggestion), async (item) => {
@@ -78,18 +57,18 @@ onMounted(() => {
 <style lang="scss" scoped>
 .search-terms-pretty {
   align-items: center;
-  width: 100%;
+  border: 0px;
+  display: inline-block;
+  font-size: 18px;
 
   padding-left: 4px;
   padding-right: 4px;
-  border: 0px;
-  font-size: 18px;
-  display: inline-block;
+  width: 100%;
 
   &:focus {
     border-radius: 0px;
-    outline: none;
     box-shadow: 0px;
+    outline: none;
   }
 }
 </style>

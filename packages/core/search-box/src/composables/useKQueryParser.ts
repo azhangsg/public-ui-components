@@ -89,7 +89,7 @@ export default function useKQueryParser() {
         const idx = ctx.start.start
         termsArray.push({
           idx,
-          termType: 'fieldValue',
+          termType: KQueryTermTypes.fieldValue,
           key: formatKey(ctx.start.start, KQueryTermTypes.fieldValue, termValue),
           termValue,
         })
@@ -162,7 +162,7 @@ export default function useKQueryParser() {
 
       enterIntersection = (ctx: IntersectionContext) => {
         console.log('enterIntersection:', ctx)
-        ctx.and_list().map((oE) => {
+        ctx.and_list().forEach((oE) => {
           console.log('oE:', oE)
 
           const idx = oE.start.start
@@ -191,7 +191,7 @@ export default function useKQueryParser() {
 
       enterUnion = (ctx: UnionContext) => {
         console.log('enterUnion:', ctx)
-        ctx.or_list().map((oE) => {
+        ctx.or_list().forEach((oE) => {
           const idx = oE.start.start
           const termValue = qsString.substring(oE.start.start, oE.start.stop + 1)
           termsArray.push({

@@ -18,3 +18,8 @@ export enum KQueryTermTypes {
   clauseEnd = 'clause-end',
   groupingEnd = 'grouping-end',
 }
+
+export enum SuggestionTypes {
+  fieldName = 'fieldName',
+  recent = 'recent'
+}

@@ -67,14 +67,14 @@ const term = computed((): KQueryTerm => {
 
     &.or {
       background-color: yellow;
-      margin:4px;
       color: red;
+      margin:4px;
     }
 
     &.and {
       background-color: lightyellow;
-      margin:4px;
       color: red;
+      margin:4px;
     }
 
     &.exclusion {
@@ -84,16 +84,16 @@ const term = computed((): KQueryTerm => {
 
     &.grouping {
       background-color: lightgray;
-      padding: 2px 4px;
-      margin: 0 4px;
-      display: inline-block;
       border: 1px solid gray;
+      display: inline-block;
+      margin: 0 4px;
+      padding: 2px 4px;
     }
     &.clause {
       background-color: lightblue;
-      padding: 2px 4px;
-      margin: 0 4px;
       border: 1px solid blue;
+      margin: 0 4px;
+      padding: 2px 4px;
     }
 }
 </style>

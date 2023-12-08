@@ -9,25 +9,29 @@
 </template>
 
 <script setup lang="ts">
+import type { PropType } from 'vue'
 import { getCursorPosition, setCursorPosition } from '../utils'
-import { ref, defineEmits, nextTick, onMounted, watch } from 'vue'
+import { ref, nextTick, onMounted, watch } from 'vue'
+import { SuggestionTypes } from '../enums'
+import type { SearchSuggestion } from '../types'
 
 const props = defineProps({
   suggestion: {
+    type: Object as PropType<SearchSuggestion>,
     default: null,
   },
 })
 
 const emit = defineEmits(['search-terms-changed'])
 
-const plainInput = ref(null)
+const plainInput = ref<HTMLElement>()
 
 const plainOnInput = (e: any) => {
-  emit('search-terms-changed', e === null ? '' : e.target.innerText)
+  emit('search-terms-changed', e === null || !e.target ? '' : e.target.innerText)
 }
 
-const setFieldValue = async (item) => {
-  if (!item) {
+const setFieldValue = async (item: any) => {
+  if (!item || !plainInput.value) {
     return
   }
 
@@ -37,7 +41,7 @@ const setFieldValue = async (item) => {
 
   let newV = ''
   let newCursorPosition = 0
-  if (item.type === 'recent') {
+  if (item.type === SuggestionTypes.fieldName) {
     newV = item.value
     newCursorPosition = item.value.length
   } else {
@@ -66,17 +70,17 @@ onMounted(() => {
 <style lang="scss" scoped>
     .search-terms-plain {
       align-items: center;
-      width:100%;
+      border: 0px;
+      display: inline-block;
+      font-size: 18px;
 
       padding-left: 4px;
       padding-right: 4px;
-      border: 0px;
-      font-size: 18px;
-      display: inline-block;
+      width:100%;
       &:focus {
         border-radius: 0px;
-        outline: none;
         box-shadow: 0px;
+        outline: none;
       }
     }
 

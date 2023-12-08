@@ -1,4 +1,4 @@
-export const setCursorPosition = (textDiv, customPosition) => {
+export const setCursorPosition = (textDiv: HTMLElement, customPosition: number) => {
 
   if (!textDiv.childNodes[0]) {
     return
@@ -17,22 +17,27 @@ export const setCursorPosition = (textDiv, customPosition) => {
   selectedRange.collapse(true)
 
   // remove all ranges
-  selectedText.removeAllRanges()
+  selectedText?.removeAllRanges()
 
   // add a new range to the selected text
-  selectedText.addRange(selectedRange)
+  selectedText?.addRange(selectedRange)
 
   // focus the cursor
   textDiv.focus()
 }
 
-export const getCursorPosition = (textDiv) => {
+export const getCursorPosition = (textDiv: HTMLElement) => {
+  if (!textDiv) {
+    return 0
+  }
   const selection = window.getSelection()
-  const range = selection.getRangeAt(0)
-  const clonedRange = range.cloneRange()
-  clonedRange.selectNodeContents(textDiv)
-  clonedRange.setEnd(range.endContainer, range.endOffset)
+  const range = selection?.getRangeAt(0)
+  if (range) {
+    const clonedRange = range?.cloneRange()
+    clonedRange?.selectNodeContents(textDiv)
+    clonedRange?.setEnd(range.endContainer, range?.endOffset)
 
-  return clonedRange.toString().length
-
+    return clonedRange.toString().length
+  }
+  return 0
 }
