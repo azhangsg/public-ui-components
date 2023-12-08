@@ -427,8 +427,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0(vue@3.3.4)
       '@kong/kquery-parser':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.4.0
+        version: 0.4.0
       antlr4:
         specifier: 4.13.1-patch-1
         version: 4.13.1-patch-1
@@ -2114,8 +2114,8 @@ packages:
       - debug
     dev: true
 
-  /@kong/kquery-parser@0.3.0:
-    resolution: {integrity: sha512-L2aLwbSbEQZ2RX01jJa2yHU8HEQFPWXaZdhD9zvwxk9f+IWz2b3DSEeOvjtWAmBF7MOZ1sUFH/TPEOI6fGAS5w==}
+  /@kong/kquery-parser@0.4.0:
+    resolution: {integrity: sha512-LCeM4BBZx8x+QHJJiBlybqjWSKkhaDrhuST/pRIKanPxQOAUjDG+KjOWJvYL4cJgvfAP8NzKfD9BvYOO5qltfw==}
     dependencies:
       antlr4: 4.13.1-patch-1
     dev: false

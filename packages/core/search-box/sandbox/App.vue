@@ -1,42 +1,40 @@
-<template>
+lay<template>
   <div class="sandbox-container">
     <main>
       <p>This is the component sandbox.</p>
-      <!-- <SearchBox
-        :searchIn="[
-          {
-            label: 'All',
-            value: '',
-            selected: true,
-          },
-          {
-            label: 'Services',
-            value: 'service_packages,service_versions',
-            selected: false,
-          },
-          {
-            label: 'Users',
-            value: 'users',
-            selected: false,
-          },
-          {
-            label: 'Developers',
-            value: 'developers',
-            selected: false,
-          },
-          {
-            label: 'Documents',
-            value: 'service_package_documents,service_version_documents',
-            selected: false,
-          },
-        ]"
-      /> -->
-      <playGround />
+      <SearchBox
+        :fetch-field-names="fieldNamesFetcher"
+        :fetch-recent-searches="recentSearchesFetcher"
+      />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-// import { SearchBox } from '../src'
-import playGround from './playground.vue'
+import { SearchBox } from '../src'
+
+const recentSearchesFetcher = async () => {
+  return [
+    '(geo.country: "United Kingdom" OR geo.country: Iceland) OR geo.city: London',
+    '@geo.country:("United Kingdom" OR Iceland) @geo.city:LOndon - this pone doesn\'t work till TPS-1813 is resolved',
+    'KAuth',
+    'Kauth OR Kaudit',
+    'Kauth AND Production',
+    'tag:prod tag:new',
+    'label.env:prod AND label.team:kauth',
+    '(type: routes OR type: SNIs) AND label.team:kauth',
+    'type:routes OR (type:SNIs AND label.team:kauth)',
+    '(type:routes AND label.team::kauth) OR (type:" SNIs" AND label.team:"ksearch")',
+    '@name:"KSearch Service"',
+  ]
+}
+
+const fieldNamesFetcher = async () => {
+  return [
+    'description',
+    'name',
+    'labels',
+    'type',
+  ]
+}
 </script>

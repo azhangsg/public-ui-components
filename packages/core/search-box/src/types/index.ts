@@ -1,6 +1,16 @@
-// Export all types and interfaces from this index.ts
-// The actual types and interfaces should be contained in separate files within this folder.
+import type { KQueryTermTypes } from '../enums'
 
-// Example:
-// export * from './component-types'
-export type SearchTerms = 'plain' | 'pretty'
+export type KQueryParserError = {
+  message: string
+  line: number
+  charPositionLine: number
+}
+
+export type KQueryTerm = {
+  idx: number
+  key: string
+  termType: KQueryTermTypes
+  termValue?: string
+  children?: KQueryTerm[]
+  parent?: number
+}
