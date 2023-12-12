@@ -69,7 +69,7 @@ const onClick = (e: any) => {
 const clearEmptyTerm = () => {
   const emptySpan = (prettyInput.value?.querySelector('.empty') as HTMLElement)
   console.log(emptySpan)
-  emptySpan.innerText = ' '
+  emptySpan.innerHTML = '<span>&nbsp;</span>'
 }
 const setFieldValue = async (item: any) => {
   clearEmptyTerm()
