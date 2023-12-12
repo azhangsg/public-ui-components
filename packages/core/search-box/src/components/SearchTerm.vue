@@ -12,7 +12,7 @@
       :contenteditable="true"
     >(</span>
     <span
-      v-if="term.termType === KQueryTermTypes.space || term.termType === KQueryTermTypes.empty"
+      v-if="term.termType === KQueryTermTypes.space"
     >&nbsp;</span>
 
     {{ term.termValue }}
@@ -68,12 +68,19 @@ const onKeyDown = (e: KeyboardEvent) => {
 
 const onKeyUp = (e: any) => {
   if (term.value.children) {
-    // return
+    return
   }
 
   if (e.code === 'Space') {
     if (!e.target.innerText.startsWith('"')) {
       emit('search-term-changed')
+    }
+  }
+
+  if (e.code === 'Backspace') {
+    if (e.target.innerText === '') {
+      emit('search-term-changed')
+      return
     }
   }
 

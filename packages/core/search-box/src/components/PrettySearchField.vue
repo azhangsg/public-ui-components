@@ -11,6 +11,7 @@
       :term="term"
       @search-term-changed="searchTermChanged"
     />
+    <span class="before-empty">&nbsp;</span>
     <SearchTerm
       :term="{ key: 'empty', termType: KQueryTermTypes.empty, idx: -1}"
       @search-term-changed="searchTermChanged"
@@ -69,7 +70,7 @@ const onClick = (e: any) => {
 const clearEmptyTerm = () => {
   const emptySpan = (prettyInput.value?.querySelector('.empty') as HTMLElement)
   console.log(emptySpan)
-  emptySpan.innerHTML = '<span>&nbsp;</span>'
+  emptySpan.innerHTML = ''
 }
 const setFieldValue = async (item: any) => {
   clearEmptyTerm()
@@ -105,6 +106,9 @@ onMounted(() => {
     border-radius: 0px;
     box-shadow: 0px;
     outline: none;
+  }
+  .before-empty {
+    width:4px;
   }
 }
 </style>
