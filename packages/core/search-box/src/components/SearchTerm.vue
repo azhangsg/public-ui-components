@@ -152,8 +152,8 @@ const searchTermClass = computed(() => {
       padding: 0 6px;
     }
     &.empty {
-      min-width:4px;
       margin-left:4px;
+      min-width:4px;
     }
 }
 </style>
