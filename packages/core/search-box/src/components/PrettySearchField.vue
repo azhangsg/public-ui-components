@@ -12,8 +12,8 @@
       @search-term-changed="searchTermChanged"
     />
     <SearchTerm
-      key="empty"
-      :term="{key: 'empty', termType: KQueryTermTypes.empty, idx: -1, termValue:' '}"
+      :term="{ key: 'empty', termType: KQueryTermTypes.empty, idx: -1}"
+      @search-term-changed="searchTermChanged"
     />
   </div>
 </template>
@@ -38,13 +38,15 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['search-terms-changed'])
+
 const prettyInput = ref<HTMLElement>()
+
 const searchTermChanged = () => {
   console.log(`searchTermChanged in Pretty:>${prettyInput.value?.innerText}<`)
   emit('search-terms-changed', prettyInput.value?.innerText.replaceAll(String.fromCharCode(160), ' '))
+  clearEmptyTerm()
 }
-
-const emit = defineEmits(['search-terms-changed'])
 
 const onClick = (e: any) => {
   console.log('onClick:', e.target.className)
@@ -64,7 +66,13 @@ const onClick = (e: any) => {
 //   emit('search-terms-changed', e === null ? '' : e.target.innerText)
 // }
 
+const clearEmptyTerm = () => {
+  const emptySpan = (prettyInput.value?.querySelector('.empty') as HTMLElement)
+  console.log(emptySpan)
+  emptySpan.innerText = ' '
+}
 const setFieldValue = async (item: any) => {
+  clearEmptyTerm()
   if (!item) {
     return
   }

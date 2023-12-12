@@ -12,7 +12,7 @@
       :contenteditable="true"
     >(</span>
     <span
-      v-if="term.termType === KQueryTermTypes.space"
+      v-if="term.termType === KQueryTermTypes.space || term.termType === KQueryTermTypes.empty"
     >&nbsp;</span>
 
     {{ term.termValue }}
@@ -111,6 +111,12 @@ const searchTermClass = computed(() => {
     div {
       display: inline-block;
     }
+    &:focus {
+      border-radius: 0px;
+      box-shadow: 0px;
+      outline: none;
+    }
+
     &.fieldValue {
       //padding: 0 4px;
     }
@@ -146,7 +152,8 @@ const searchTermClass = computed(() => {
       padding: 0 6px;
     }
     &.empty {
-      min-width:10px;
+      min-width:4px;
+      margin-left:4px;
     }
 }
 </style>
