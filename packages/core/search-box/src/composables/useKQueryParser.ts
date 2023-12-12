@@ -52,8 +52,9 @@ export default function useKQueryParser() {
     }, 200)
   }
 
-  watch(() => (searchTermsString.value), (qsString) => {
-    console.log('in the watch:', qsString)
+  watch(searchTermsString, (qsString) => {
+    qsString = qsString.trim()
+    console.log(`in the watch:>${qsString}<`)
     parserError.value = undefined
     searchTerms.value = []
     if (qsString.trim() === '') {
@@ -127,8 +128,8 @@ export default function useKQueryParser() {
         })
       }
 
-      enterEntityClause = (ctx: EntityClauseContext) => {
-        console.log('enterEntityClause:', ctx)
+      exitEntityClause = (ctx: EntityClauseContext) => {
+        console.log('exitEntityClause:', ctx)
         const idx = ctx.start.start
         const termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
 
@@ -211,7 +212,7 @@ export default function useKQueryParser() {
       return a.idx - b.idx
     })
 
-    console.log('termsArray', termsArray)
+    console.log('termsArray:', [...termsArray])
 
     const parentIdx = []
     const parentIdxFull = []
@@ -233,8 +234,7 @@ export default function useKQueryParser() {
       }
     }
 
-    console.log('termsArray with parent assigned:', termsArray)
-
+    console.log('termsArray with parent assigned:', [...termsArray])
     parentIdxFull.sort((a, b) => (b - a))
 
     parentIdxFull.forEach((i: number) => {
@@ -255,8 +255,41 @@ export default function useKQueryParser() {
         termsArray.splice(j, 1)
       }
     }
+
+    const addSpaces = (tArray: any) => {
+      console.log('starting for:', tArray)
+      //      debugger
+      while (1) {
+        let spacesDone = true
+        for (let j = 0; j < tArray.length; j++) {
+          if (tArray[j].children) {
+            addSpaces(tArray[j].children)
+          }
+        }
+        for (let j = 0; j < tArray.length - 1; j++) {
+          if (tArray[j].termType === KQueryTermTypes.space || tArray[j + 1].termType === KQueryTermTypes.space) {
+            continue
+          }
+          if (tArray[j].termType === KQueryTermTypes.fieldName && tArray[j + 1].termType === KQueryTermTypes.fieldValue) {
+            continue
+          }
+          if (tArray[j + 1].termType !== KQueryTermTypes.space) {
+            tArray.splice(j + 1, 0, { idx: tArray[j + 1].idx - 1, termType: KQueryTermTypes.space })
+            spacesDone = false
+            console.log('here', [...tArray])
+            // debugger
+            break
+          }
+        }
+        if (spacesDone) {
+          break
+        }
+      }
+    }
+    addSpaces(termsArray)
+
     // termsArray.push({ type: 'clause' })
-    console.log('termsArray:', termsArray)
+    console.log('termsArray final:', [...termsArray])
     searchTerms.value = termsArray
 
     //    console.log('termsArray:', JSON.stringify(termsArray, null, 2))

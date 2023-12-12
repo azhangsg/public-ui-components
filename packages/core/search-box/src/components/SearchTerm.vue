@@ -1,15 +1,21 @@
 <template>
   <div
-    :class="`search-term ${term.termType}`"
-    contenteditable="true"
+    :class="`search-term ${searchTermClass}`"
+    :contenteditable="isEditable"
+    @focusout="onFocustout"
+    @keydown="onKeyDown"
+    @keyup="onKeyUp"
   >
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
+      class="col"
+      :contenteditable="true"
     >(</span>
     <span
-      v-if="term.termType === KQueryTermTypes.clause"
-    >{{ " " }}</span>
-    <span>{{ term.termValue }}</span>
+      v-if="term.termType === KQueryTermTypes.space"
+    >&nbsp;</span>
+
+    {{ term.termValue }}
     <search-term
       v-for="item in term.children"
       :key="item.key"
@@ -18,15 +24,15 @@
 
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
-      contenteditable="true"
+      class="col"
+      :contenteditable="true"
     >)</span>
-    <span
-      v-if="term.termType === KQueryTermTypes.fieldName"
-    >:</span>
-    <span
-      v-if="term.termType === KQueryTermTypes.clause"
-    >{{ " " }}</span>
   </div>
+  <span
+    v-if="term.termType === KQueryTermTypes.fieldName"
+    class="col"
+    :contenteditable="true"
+  >:</span>
 </template>
 
 <script setup lang="ts">
@@ -42,58 +48,105 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['search-term-changed'])
+
 const term = computed((): KQueryTerm => {
   return props.term
 })
 
+const isEditable = computed((): boolean => {
+  return !term.value.children && term.value.termType !== KQueryTermTypes.space
+})
+
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.code === 'Enter') {
+    e.stopPropagation()
+    e.preventDefault()
+    return false
+  }
+}
+
+const onKeyUp = (e: any) => {
+  if (term.value.children) {
+    // return
+  }
+
+  if (e.code === 'Space') {
+    if (!e.target.innerText.startsWith('"')) {
+      emit('search-term-changed')
+    }
+  }
+
+  console.log('searchTerm:', e, e.target.innerText)
+  // emit('search-terms-changed', e === null || !e.target ? '' : e.target.innerText)
+}
+
+const onFocustout = (e:any) => {
+  console.log('on onFocustout:', e)
+  emit('search-term-changed')
+}
+
+const searchTermClass = computed(() => {
+  if (term.value.termType !== KQueryTermTypes.clause || !term.value?.children) {
+    return term.value.termType
+  }
+  // only clause that doesn't have any children cluases has a class
+  for (let i = 0; i < term.value?.children?.length; i++) {
+    if ([KQueryTermTypes.clause, KQueryTermTypes.grouping].includes(term.value?.children[i]?.termType)) {
+      // return ''
+    }
+  }
+  return term.value.termType
+})
 </script>
 
 <style lang="scss" scoped>
 .search-term {
     display: inline-block;
 
+    .col {
+      color: magenta;
+    }
+
     div {
       display: inline-block;
     }
     &.fieldValue {
-      background-color: green;
-      margin:4px;
+      //padding: 0 4px;
     }
 
     &.fieldName {
-      background-color: red;
-      margin:0px;
+      //padding: 0 4px;
     }
 
     &.or {
-      background-color: yellow;
-      color: red;
-      margin:4px;
+      // background-color: white;
+      color: magenta;
+      // margin:4px;
     }
 
     &.and {
-      background-color: lightyellow;
-      color: red;
-      margin:4px;
+      // background-color: white;
+      color: magenta;
+      // margin:4px;
     }
 
     &.exclusion {
-      background-color: magenta;
-      margin:4px;
+      background-color: white;
+      color: magenta;
     }
 
     &.grouping {
-      background-color: lightgray;
-      border: 1px solid gray;
-      display: inline-block;
-      margin: 0 4px;
-      padding: 2px 4px;
+      // background-color: lightgray;
+      // border: 1px solid gray;
     }
     &.clause {
-      background-color: lightblue;
-      border: 1px solid blue;
-      margin: 0 4px;
-      padding: 2px 4px;
+      background-color: lightgray;
+      border-radius: 6px;
+      padding: 0 6px;
+    }
+    &.empty {
+      min-width:10px;
     }
 }
 </style>

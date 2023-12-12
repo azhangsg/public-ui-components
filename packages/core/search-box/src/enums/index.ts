@@ -17,6 +17,8 @@ export enum KQueryTermTypes {
   quotedValue= 'quotedValue',
   clauseEnd = 'clause-end',
   groupingEnd = 'grouping-end',
+  empty='empty',
+  space='space'
 }
 
 export enum SuggestionTypes {

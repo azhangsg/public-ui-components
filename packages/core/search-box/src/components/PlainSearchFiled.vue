@@ -4,7 +4,8 @@
     class="search-terms-plain"
     contenteditable="true"
     placeholder="Add search criteria..."
-    @keyup="plainOnInput"
+    @keydown.stop="onKeyDown"
+    @keyup="onKeyUp"
   />
 </template>
 
@@ -26,7 +27,15 @@ const emit = defineEmits(['search-terms-changed'])
 
 const plainInput = ref<HTMLElement>()
 
-const plainOnInput = (e: any) => {
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.code === 'Enter') {
+    e.stopPropagation()
+    e.preventDefault()
+    return false
+  }
+}
+
+const onKeyUp = (e: any) => {
   emit('search-terms-changed', e === null || !e.target ? '' : e.target.innerText)
 }
 
@@ -41,7 +50,7 @@ const setFieldValue = async (item: any) => {
 
   let newV = ''
   let newCursorPosition = 0
-  if (item.type === SuggestionTypes.fieldName) {
+  if (item.type === SuggestionTypes.recent) {
     newV = item.value
     newCursorPosition = item.value.length
   } else {
@@ -63,6 +72,7 @@ watch(() => (props.suggestion), async (item) => {
 })
 
 onMounted(() => {
+  console.log('onMOunted', props.suggestion)
   setFieldValue(props.suggestion)
 })
 </script>

@@ -83,7 +83,7 @@ const props = defineProps({
   },
 })
 
-const searchEntryType = ref<SearchEntryTypes>(SearchEntryTypes.plain)
+const searchEntryType = ref<SearchEntryTypes>(SearchEntryTypes.pretty)
 const selectedSuggestion = ref(null)
 
 const searchEntryTypeIcons = {
@@ -116,9 +116,7 @@ const searchTermsChanged = (newSearchTermsString: string) => {
 const changeSearchEntryType = async () => {
   searchEntryType.value = searchEntryType.value === SearchEntryTypes.plain ? SearchEntryTypes.pretty : SearchEntryTypes.plain
 
-  if (searchEntryType.value === SearchEntryTypes.plain) {
-    selectedSuggestion.value = { type: 'recent', value: searchTermsString.value }
-  }
+  selectedSuggestion.value = { type: 'recent', value: searchTermsString.value }
   console.log('changeSearchType to', searchEntryType.value, searchTermsString.value, searchTerms.value)
 }
 
@@ -126,11 +124,11 @@ const clearSearchTerms = () => {
 
   parse('')
   if (searchEntryType.value === SearchEntryTypes.plain) {
-    selectedSuggestion.value = { type: 'recent', value: '' }
+    selectedSuggestion.value = { type: SuggestionTypes.recent, value: '' }
   }
 }
 
-const handleSuggestionSelect = async (item) => {
+const handleSuggestionSelect = async (item: SearchSuggestion) => {
   selectedSuggestion.value = item
 }
 

@@ -1,13 +1,19 @@
 <template>
   <div
+    ref="prettyInput"
     class="search-terms-pretty"
-    contenteditable="true"
     placeholder="Add search criteria..."
+    @click="onClick"
   >
     <SearchTerm
       v-for="term in searchTerms"
       :key="term.key"
       :term="term"
+      @search-term-changed="searchTermChanged"
+    />
+    <SearchTerm
+      key="empty"
+      :term="{key: 'empty', termType: KQueryTermTypes.empty, idx: -1, termValue:' '}"
     />
   </div>
 </template>
@@ -15,9 +21,11 @@
 <script setup lang="ts">
 import type { PropType } from 'vue'
 
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 import SearchTerm from './SearchTerm.vue'
 import type { KQueryTerm } from './../types'
+import { KQueryTermTypes } from './../enums'
+// import { getCursorPosition, setCursorPosition } from '../utils'
 
 const props = defineProps({
   suggestion: {
@@ -29,6 +37,24 @@ const props = defineProps({
     required: true,
   },
 })
+
+const prettyInput = ref<HTMLElement>()
+const searchTermChanged = () => {
+  console.log(`searchTermChanged in Pretty:>${prettyInput.value?.innerText}<`)
+  emit('search-terms-changed', prettyInput.value?.innerText.replaceAll(String.fromCharCode(160), ' '))
+}
+
+const emit = defineEmits(['search-terms-changed'])
+
+const onClick = (e: any) => {
+  console.log('onClick:', e.target.className)
+  if (e.target.className === 'search-terms-pretty') {
+    const emptyEl = prettyInput.value?.querySelector('.empty') as HTMLElement
+    if (emptyEl) {
+      emptyEl.focus()
+    }
+  }
+}
 
 // const emit = defineEmits(['search-terms-changed'])
 
@@ -43,6 +69,8 @@ const setFieldValue = async (item: any) => {
     return
   }
   console.log('suggestion:', item)
+  emit('search-terms-changed', item.value)
+
 }
 
 watch(() => (props.suggestion), async (item) => {

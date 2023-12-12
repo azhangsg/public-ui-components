@@ -31,7 +31,10 @@ export const getCursorPosition = (textDiv: HTMLElement) => {
     return 0
   }
   const selection = window.getSelection()
-  const range = selection?.getRangeAt(0)
+  if (!selection) {
+    return 0
+  }
+  const range = selection.rangeCount > 0 ? selection?.getRangeAt(0) : null
   if (range) {
     const clonedRange = range?.cloneRange()
     clonedRange?.selectNodeContents(textDiv)
