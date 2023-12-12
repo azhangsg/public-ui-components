@@ -89,8 +89,12 @@ const onKeyUp = (e: any) => {
 }
 
 const onFocustout = (e:any) => {
-  console.log('on onFocustout:', e)
-  emit('search-term-changed')
+  console.log('on onFocustout:', e, e.target.className)
+  if (!e.target.className.split(' ').includes('empty')) {
+    emit('search-term-changed')
+  } else if (e.target.innerText !== '') {
+    emit('search-term-changed')
+  }
 }
 
 const searchTermClass = computed(() => {

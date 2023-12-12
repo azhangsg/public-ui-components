@@ -50,7 +50,6 @@ const searchTermChanged = () => {
 }
 
 const onClick = (e: any) => {
-  console.log('onClick:', e.target.className)
   if (e.target.className === 'search-terms-pretty') {
     const emptyEl = prettyInput.value?.querySelector('.empty') as HTMLElement
     if (emptyEl) {
@@ -71,6 +70,7 @@ const clearEmptyTerm = () => {
   const emptySpan = (prettyInput.value?.querySelector('.empty') as HTMLElement)
   console.log(emptySpan)
   emptySpan.innerHTML = ''
+  emptySpan.focus()
 }
 const setFieldValue = async (item: any) => {
   clearEmptyTerm()
