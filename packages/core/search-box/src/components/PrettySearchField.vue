@@ -9,11 +9,15 @@
       v-for="term in searchTerms"
       :key="term.key"
       :term="term"
+      @delete-right-term="deleteRightTerm"
+      @focus-left="focusLeft"
       @search-term-changed="searchTermChanged"
     />
     <span class="before-empty">&nbsp;</span>
     <SearchTerm
       :term="{ key: 'empty', termType: KQueryTermTypes.empty, idx: -1}"
+      @delete-right-term="deleteRightTerm"
+      @focus-left="focusLeft"
       @search-term-changed="searchTermChanged"
     />
   </div>
@@ -47,6 +51,20 @@ const searchTermChanged = () => {
   console.log(`searchTermChanged in Pretty:>${prettyInput.value?.innerText}<`)
   emit('search-terms-changed', prettyInput.value?.innerText.replaceAll(String.fromCharCode(160), ' '))
   clearEmptyTerm()
+}
+
+const deleteRightTerm = () => {
+  const children = prettyInput.value?.children
+  console.log('children:', children)
+  if (children) {
+    console.log('to be deleted:', children[children?.length - 3])
+    prettyInput.value?.removeChild(children[children?.length - 3])
+    emit('search-terms-changed', prettyInput.value?.innerText.replaceAll(String.fromCharCode(160), ' '))
+  }
+}
+
+const focusLeft = () => {
+  console.log('focus left:')
 }
 
 const onClick = (e: any) => {
