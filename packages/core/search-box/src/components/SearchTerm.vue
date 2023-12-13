@@ -90,7 +90,6 @@ const onKeyUp = (e: any) => {
 }
 
 const onFocustout = (e:any) => {
-  return
   console.log('on onFocustout:', e, e.target.className)
   if (!e.target.className.split(' ').includes('empty')) {
     emit('search-term-changed')
