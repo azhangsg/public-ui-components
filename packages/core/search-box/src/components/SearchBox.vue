@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="kong-ui-public-search-box">
-      <div class="search-terms-contaner">
+      <div class="search-terms-container">
         <button class="search-start-btn">
           <KIcon
             icon="search"
@@ -9,25 +9,19 @@
           />
         </button>
 
-        <KDropdown
-          class="query-suggestions"
-          :items="suggestionItems"
-          selection-menu
-          width="100%"
-          @change="handleSuggestionSelect"
-        >
-          <PrettySearchFiled
-            v-if="searchEntryType == SearchEntryTypes.pretty"
-            :search-terms="searchTerms"
-            :suggestion="selectedSuggestion"
-            @search-terms-changed="searchTermsChanged"
-          />
-          <PlainSearchFiled
-            v-if="searchEntryType == SearchEntryTypes.plain"
-            :suggestion="selectedSuggestion"
-            @search-terms-changed="searchTermsChanged"
-          />
-        </KDropdown>
+        <PrettySearchFiled
+          v-if="searchEntryType == SearchEntryTypes.pretty"
+          :cursor-position="cursorPosition"
+          :search-terms="searchTerms"
+          @search-terms-changed="searchTermsChanged"
+        />
+        <PlainSearchFiled
+          v-if="searchEntryType == SearchEntryTypes.plain"
+          :initial-cursor-position="initialCursorPosition"
+          :initial-value="initialSearchTermsValue"
+          @search-terms-changed="searchTermsChanged"
+        />
+        <!-- </KDropdoZwn> -->
         <button
           v-if="searchTermsString != ''"
           class="search-for-clear-btn"
@@ -57,20 +51,38 @@
     >
       {{ parserError?.message }}
     </div>
+    <KTabs
+      v-model="activeTab"
+      :tabs="tabs"
+    >
+      <template #tab1>
+        <ResultsList />
+      </template>
+      <template #tab2>
+        <SuggestionsList
+          :cursor-position="cursorPosition"
+          :fetch-field-names="props.fetchFieldNames"
+          :fetch-recent-searches="props.fetchRecentSearches"
+          :search-terms-string="searchTermsString"
+          @suggestion-selected="suggestionSelected"
+        />
+      </template>
+    </KTabs>
   </div>
 </template>
 
 <script setup lang="ts">
 
-// @ts-nocheck
 import type { PropType } from 'vue'
-import { ref, computed, onMounted } from 'vue'
-import { SearchEntryTypes, SuggestionTypes } from '../enums'
+import { ref, computed } from 'vue'
 import composables from '../composables'
-import type { SearchSuggestion } from '../types'
+import { SearchEntryTypes } from '../enums'
+
 import { ListIcon, TableIcon } from '@kong/icons'
 import PlainSearchFiled from './PlainSearchFiled.vue'
 import PrettySearchFiled from './PrettySearchField.vue'
+import SuggestionsList from './SuggestionsList.vue'
+import ResultsList from './ResultsList.vue'
 
 const props = defineProps({
   fetchRecentSearches: {
@@ -84,7 +96,8 @@ const props = defineProps({
 })
 
 const searchEntryType = ref<SearchEntryTypes>(SearchEntryTypes.pretty)
-const selectedSuggestion = ref(null)
+const initialSearchTermsValue = ref('')
+const initialCursorPosition = ref(0)
 
 const searchEntryTypeIcons = {
   plain: ListIcon,
@@ -92,50 +105,52 @@ const searchEntryTypeIcons = {
 
 }
 
-const recentSearches = ref<string[]>([])
-const fieldNames = ref<string[]>([])
+const { searchTermsString, parse, parserError, searchTerms, cursorPosition } = composables.useKQueryParser()
 
-const { searchTermsString, parse, parserError, searchTerms } = composables.useKQueryParser()
-
-const suggestionItems = computed((): Array<SearchSuggestion> => {
-  const entityFields = fieldNames.value
-
+const tabs = computed(() => {
   return [
-    ...(
-      searchTermsString.value.trim().endsWith(':') ? [] : entityFields.reduce((a, b) => { a.push({ label: b + ':', value: b + ':', type: SuggestionTypes.fieldName }); return a }, [])
-    ),
-    ...(recentSearches.value.length > 0 ? [{ label: 'RECENT SEARCHES', disabled: true }] : []),
-    ...recentSearches.value.reduce((a, b) => { a.push({ label: b, value: b, type: SuggestionTypes.recent }); return a }, []),
+    {
+      hash: '#tab1',
+      title: 'Results',
+    },
+    {
+      hash: '#tab2',
+      title: 'Sugestions',
+    },
   ]
 })
 
-const searchTermsChanged = (newSearchTermsString: string) => {
-  parse(newSearchTermsString)
+const activeTab = computed(() => {
+  return '#tab2'
+})
+
+const searchTermsChanged = (newSearchTermsString: string, newCursorPosition: number) => {
+  parse(newSearchTermsString, newCursorPosition, true)
+}
+
+const suggestionSelected = (newSearchTermsString: string, newCursorPosition: number) => {
+  console.log('suggestionSelected:', newSearchTermsString, newCursorPosition)
+  parse(newSearchTermsString, newCursorPosition, false)
+  initialSearchTermsValue.value = newSearchTermsString
+  initialCursorPosition.value = newCursorPosition
 }
 
 const changeSearchEntryType = async () => {
   searchEntryType.value = searchEntryType.value === SearchEntryTypes.plain ? SearchEntryTypes.pretty : SearchEntryTypes.plain
 
-  selectedSuggestion.value = { type: 'recent', value: searchTermsString.value }
+  initialSearchTermsValue.value = searchTermsString.value
+  initialCursorPosition.value = searchTermsString.value.length
   console.log('changeSearchType to', searchEntryType.value, searchTermsString.value, searchTerms.value)
 }
 
 const clearSearchTerms = () => {
 
-  parse('')
+  parse('', 0, false)
   if (searchEntryType.value === SearchEntryTypes.plain) {
-    selectedSuggestion.value = { type: SuggestionTypes.recent, value: '' }
+    initialSearchTermsValue.value = ''
   }
 }
 
-const handleSuggestionSelect = async (item: SearchSuggestion) => {
-  selectedSuggestion.value = item
-}
-
-onMounted(async () => {
-  recentSearches.value = await props.fetchRecentSearches()
-  fieldNames.value = await props.fetchFieldNames()
-})
 </script>
 
 <style lang="scss" scoped>
@@ -153,7 +168,7 @@ onMounted(async () => {
   flex-direction: row;
   justify-content: center;
 
-  .search-terms-contaner {
+  .search-terms-container {
     align-items: center;
     border: 1px solid gray;
     display: flex;
@@ -175,14 +190,6 @@ onMounted(async () => {
         }
       }
     }
-
-      // [contenteditable=true]:empty:not(:focus):before {
-      //   content: attr(placeholder);
-      //   font-size: 22px;
-      //   pointer-events: none;
-      //   color: gray;
-      //   //display: block; /* For Firefox */
-      // }
 
       .search-start-btn {
       align-items: center;

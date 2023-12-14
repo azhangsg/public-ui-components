@@ -1,21 +1,19 @@
 <template>
   <div
     :class="`search-term ${searchTermClass}`"
-    :contenteditable="isEditable"
-    @focusout="onFocustout"
-    @keydown="onKeyDown"
-    @keyup="onKeyUp"
+    @focZusout="onFocustout"
+    @keyZdown="onKeyDown"
+    @keyZup="onKeyUp"
   >
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
       class="col"
-      :contenteditable="true"
     >(</span>
     <span
       v-if="term.termType === KQueryTermTypes.space"
     >&nbsp;</span>
 
-    {{ term.termValue }}
+    <span>{{ term.termValue }}</span>
     <search-term
       v-for="item in term.children"
       :key="item.key"
@@ -25,13 +23,11 @@
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
       class="col"
-      :contenteditable="true"
     >)</span>
   </div>
   <span
     v-if="term.termType === KQueryTermTypes.fieldName"
     class="col"
-    :contenteditable="true"
   >:</span>
 </template>
 
@@ -52,10 +48,6 @@ const emit = defineEmits(['search-term-changed', 'delete-right-term', 'focus-lef
 
 const term = computed((): KQueryTerm => {
   return props.term
-})
-
-const isEditable = computed((): boolean => {
-  return !term.value.children && term.value.termType !== KQueryTermTypes.space
 })
 
 const onKeyDown = (e: KeyboardEvent) => {

@@ -2,35 +2,30 @@
   <div
     ref="prettyInput"
     class="search-terms-pretty"
+    contenteditable="true"
     placeholder="Add search criteria..."
-    @click="onClick"
+    @click.stop="onClick"
+    @keydown.stop="onKeyDown"
+    @keyup.stop="onKeyUp"
   >
     <SearchTerm
       v-for="term in searchTerms"
       :key="term.key"
       :term="term"
-      @delete-right-term="deleteRightTerm"
-      @focus-left="focusLeft"
-      @search-term-changed="searchTermChanged"
     />
-    <span class="before-empty">&nbsp;</span>
-    <SearchTerm
-      :term="{ key: 'empty', termType: KQueryTermTypes.empty, idx: -1}"
-      @delete-right-term="deleteRightTerm"
-      @focus-left="focusLeft"
-      @search-term-changed="searchTermChanged"
-    />
+    <span
+      ref="additionalInput"
+    >&nbsp;</span>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
 
-import { onMounted, watch, ref } from 'vue'
+import { onMounted, watch, ref, nextTick } from 'vue'
 import SearchTerm from './SearchTerm.vue'
 import type { KQueryTerm } from './../types'
-import { KQueryTermTypes } from './../enums'
-// import { getCursorPosition, setCursorPosition } from '../utils'
+import { setCursorPosition, getCursorPosition } from '../utils'
 
 const props = defineProps({
   suggestion: {
@@ -41,71 +36,61 @@ const props = defineProps({
     type: Object as PropType<Array<KQueryTerm>>,
     required: true,
   },
+  cursorPosition: {
+    type: Number,
+    default: 0,
+  },
 })
 
 const emit = defineEmits(['search-terms-changed'])
 
 const prettyInput = ref<HTMLElement>()
+const additionalInput = ref<HTMLElement>()
 
-const searchTermChanged = () => {
-  console.log(`searchTermChanged in Pretty:>${prettyInput.value?.innerText}<`)
-  emit('search-terms-changed', prettyInput.value?.innerText.replaceAll(String.fromCharCode(160), ' '))
-  clearEmptyTerm()
-}
-
-const deleteRightTerm = () => {
-  const children = prettyInput.value?.children
-  console.log('children:', children)
-  if (children) {
-    console.log('to be deleted:', children[children?.length - 3])
-    prettyInput.value?.removeChild(children[children?.length - 3])
-    emit('search-terms-changed', prettyInput.value?.innerText.replaceAll(String.fromCharCode(160), ' '))
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.code === 'Enter') {
+    e.stopPropagation()
+    e.preventDefault()
+    return false
   }
 }
 
-const focusLeft = () => {
-  console.log('focus left:')
+const onClick = (e: FocusEvent) => {
+  fireChangedEvent(e)
 }
 
-const onClick = (e: any) => {
-  if (e.target.className === 'search-terms-pretty') {
-    const emptyEl = prettyInput.value?.querySelector('.empty') as HTMLElement
-    if (emptyEl) {
-      emptyEl.focus()
-    }
-  }
-}
-
-// const emit = defineEmits(['search-terms-changed'])
-
-// const plainInput = ref(null)
-
-// const plainOnInput = (e: any) => {
-//   emit('search-terms-changed', e === null ? '' : e.target.innerText)
-// }
-
-const clearEmptyTerm = () => {
-  const emptySpan = (prettyInput.value?.querySelector('.empty') as HTMLElement)
-  console.log(emptySpan)
-  emptySpan.innerHTML = ''
-  emptySpan.focus()
-}
-const setFieldValue = async (item: any) => {
-  clearEmptyTerm()
-  if (!item) {
+const onKeyUp = (e: KeyboardEvent) => {
+  if (e.code === 'Space') {
     return
   }
-  console.log('suggestion:', item)
-  emit('search-terms-changed', item.value)
-
+  fireChangedEvent(e)
 }
 
-watch(() => (props.suggestion), async (item) => {
-  setFieldValue(item)
+const fireChangedEvent = (e: FocusEvent| KeyboardEvent) => {
+  const htmlEl = e.target as HTMLElement
+  const cursorPosition = getCursorPosition(htmlEl)
+  console.log('fireChangedEvent:', e, cursorPosition, htmlEl)
+  emit('search-terms-changed', htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+}
+
+watch(() => ({ terms: props.searchTerms, pos: props.cursorPosition }), async (v) => {
+  console.log('watch searchTerms:', v)
+  if (additionalInput.value) {
+    additionalInput.value.innerHTML = '&nbsp;'
+  }
+  await nextTick()
+  setCursorPosition(prettyInput.value, v.pos)
 })
 
-onMounted(() => {
-  setFieldValue(props.suggestion)
+onMounted(async () => {
+//  setFieldValue(props.suggestion)
+  if (additionalInput.value) {
+    additionalInput.value.innerHTML = '&nbsp;'
+  }
+  console.log('onMOunted', props.searchTerms, props.cursorPosition)
+  await nextTick()
+  setCursorPosition(prettyInput.value, props.cursorPosition)
+  // prettyInput.value?.focus()
 })
 </script>
 

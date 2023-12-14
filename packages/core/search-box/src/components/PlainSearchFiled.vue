@@ -4,22 +4,24 @@
     class="search-terms-plain"
     contenteditable="true"
     placeholder="Add search criteria..."
+    @click="onClick"
     @keydown.stop="onKeyDown"
     @keyup="onKeyUp"
   />
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue'
 import { getCursorPosition, setCursorPosition } from '../utils'
 import { ref, nextTick, onMounted, watch } from 'vue'
-import { SuggestionTypes } from '../enums'
-import type { SearchSuggestion } from '../types'
 
 const props = defineProps({
-  suggestion: {
-    type: Object as PropType<SearchSuggestion>,
-    default: null,
+  initialValue: {
+    type: String,
+    default: '',
+  },
+  initialCursorPosition: {
+    type: Number,
+    default: 0,
   },
 })
 
@@ -35,45 +37,43 @@ const onKeyDown = (e: KeyboardEvent) => {
   }
 }
 
-const onKeyUp = (e: any) => {
-  emit('search-terms-changed', e === null || !e.target ? '' : e.target.innerText)
+const onClick = (e: FocusEvent) => {
+  fireChangedEvent(e)
 }
 
-const setFieldValue = async (item: any) => {
-  if (!item || !plainInput.value) {
+const onKeyUp = (e: any) => {
+  fireChangedEvent(e)
+}
+
+const fireChangedEvent = (e: FocusEvent | KeyboardEvent) => {
+  const htmlEl = e.target as HTMLElement
+  const cursorPosition = getCursorPosition(htmlEl)
+  console.log('fireChangedEvent:', e, cursorPosition, htmlEl)
+  emit('search-terms-changed', htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+}
+
+const setFieldValue = async (newStringValue: string, newCursorPosition: number) => {
+
+  console.log('suggestion:', newStringValue, newCursorPosition)
+  const cursorPosition = getCursorPosition(plainInput.value)
+  console.log('current cursorPosition:', cursorPosition)
+
+  if (!plainInput.value || plainInput.value.innerText === newStringValue) {
     return
   }
-
-  console.log('suggestion:', item)
-  const cursorPosition = getCursorPosition(plainInput.value)
-  console.log('cursorPosition:', cursorPosition)
-
-  let newV = ''
-  let newCursorPosition = 0
-  if (item.type === SuggestionTypes.recent) {
-    newV = item.value
-    newCursorPosition = item.value.length
-  } else {
-    const searchTermsArr = plainInput.value.innerText.split('')
-    searchTermsArr.splice(cursorPosition, 0, (cursorPosition === 0 ? '' : ' ') + item.value + ' ')
-    newV = searchTermsArr.join('')
-    newCursorPosition = cursorPosition + 1 + item.value.length
-  }
-  plainInput.value.innerText = newV
-
-  emit('search-terms-changed', newV)
-
+  plainInput.value.innerText = newStringValue
   await nextTick()
   setCursorPosition(plainInput.value, newCursorPosition)
+
 }
 
-watch(() => (props.suggestion), async (item) => {
-  setFieldValue(item)
+watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
+  setFieldValue(item.v, item.p)
 })
 
 onMounted(() => {
-  console.log('onMOunted', props.suggestion)
-  setFieldValue(props.suggestion)
+  console.log('onMOunted', props.initialValue)
+  setFieldValue(props.initialValue, props.initialCursorPosition)
 })
 </script>
 

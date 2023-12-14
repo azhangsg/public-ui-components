@@ -31,43 +31,47 @@ export default function useKQueryParser() {
   // here is where we keep string (plain) search string
   const searchTermsString = ref<string>('')
   const searchTerms = ref <KQueryTerm[]>([])
+  const cursorPosition = ref<number>(0)
   let timeout: any
 
   // triggers update of searchString and parse process
-  const parse = (queryString: string|null): void => {
-    console.log('parse called', queryString)
+  const parse = (queryString: string, cursorPos: number, debounce:boolean = true): void => {
+    queryString = queryString.trimStart()
+    console.log(`parse called: >${queryString}<`, cursorPos)
 
     clearTimeout(timeout)
 
     // no need debounce here
-    if (queryString === '') {
+    if (queryString === '' || !debounce) {
+      cursorPosition.value = cursorPos
       searchTermsString.value = queryString
       return
     }
 
     timeout = setTimeout(() => {
       if (queryString || queryString === '') {
+        cursorPosition.value = cursorPos
         searchTermsString.value = queryString
       }
-    }, 200)
+    }, 300)
   }
 
-  watch(searchTermsString, (qsString) => {
-    qsString = qsString.trim()
+  watch(cursorPosition, (cursorPos:number) => {
+    console.log('cursor position changed:', cursorPos)
+  })
+
+  watch(searchTermsString, (qsString: string) => {
     console.log(`in the watch:>${qsString}<`)
     parserError.value = undefined
-    searchTerms.value = []
     if (qsString.trim() === '') {
+      searchTerms.value = []
       return
     }
     const termsArray:Array<KQueryTerm> = []
 
     const chars = new CharStream(qsString) // replace this with a FileStream as required
-    console.log('chars', chars)
     const lexer = new KQueryLexer(chars)
-    console.log('lexer', lexer)
     const tokens = new CommonTokenStream(lexer)
-    console.log('tokens', tokens)
     const parser = new KQueryParser(tokens)
 
     parser.removeErrorListeners()
@@ -75,17 +79,15 @@ export default function useKQueryParser() {
     parser.addErrorListener(new KQueryErrorListener())
 
     const tree = parser.result()
-
-    console.log('parserError.value:', parserError.value)
     console.log('prefix notation:', tree?.toStringTree(['result'], parser))
 
+    const dtKey = new Date().getTime()
     const formatKey = (idx: number, termType: KQueryTermTypes, value?: string) => {
-      return `${idx}-${termType}${value ? '-' + value : ''}`
+      return `${idx}-${dtKey}-${termType}${value ? '-' + value : ''}`
     }
 
     class MyTreeWalker extends KQueryParserListener {
       enterFieldValue = (ctx: FieldValueContext) => {
-        console.log('enterFieldValue:', ctx)
         const termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
         const idx = ctx.start.start
         termsArray.push({
@@ -97,7 +99,6 @@ export default function useKQueryParser() {
       }
 
       enterFieldName = (ctx: FieldNameContext) => {
-        console.log('enterFieldName:', ctx)
         const termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
         const idx = ctx.start.start
         termsArray.push({
@@ -109,7 +110,6 @@ export default function useKQueryParser() {
       }
 
       enterClause = (ctx: ClauseContext) => {
-        console.log('enterClause:', ctx)
         const idx = ctx.start.start
         termsArray.push({
           idx,
@@ -119,7 +119,6 @@ export default function useKQueryParser() {
       }
 
       exitClause = (ctx: ClauseContext) => {
-        console.log('exitClause:', ctx)
         const idx = ctx.stop?.stop || ctx.start.stop
         termsArray.push({
           idx,
@@ -129,7 +128,6 @@ export default function useKQueryParser() {
       }
 
       exitEntityClause = (ctx: EntityClauseContext) => {
-        console.log('exitEntityClause:', ctx)
         const idx = ctx.start.start
         const termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
 
@@ -142,7 +140,6 @@ export default function useKQueryParser() {
       }
 
       enterGrouping = (ctx: GroupingContext) => {
-        console.log('enterGrouping:', ctx)
         const idx = ctx.start.start
         termsArray.push({
           idx,
@@ -152,7 +149,6 @@ export default function useKQueryParser() {
       }
 
       exitGrouping = (ctx: GroupingContext) => {
-        console.log('exitGrouping:', ctx)
         const idx = ctx.stop?.start || ctx.start.stop
         termsArray.push({
           idx,
@@ -162,7 +158,6 @@ export default function useKQueryParser() {
       }
 
       enterIntersection = (ctx: IntersectionContext) => {
-        console.log('enterIntersection:', ctx)
         ctx.and_list().forEach((oE) => {
           console.log('oE:', oE)
 
@@ -179,7 +174,6 @@ export default function useKQueryParser() {
       }
 
       enterExclusion = (ctx: ExclusionContext) => {
-        console.log('enterExclusion:', ctx)
         const idx = ctx.start.start
         const termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
         termsArray.push({
@@ -191,7 +185,6 @@ export default function useKQueryParser() {
       }
 
       enterUnion = (ctx: UnionContext) => {
-        console.log('enterUnion:', ctx)
         ctx.or_list().forEach((oE) => {
           const idx = oE.start.start
           const termValue = qsString.substring(oE.start.start, oE.start.stop + 1)
@@ -238,7 +231,6 @@ export default function useKQueryParser() {
     parentIdxFull.sort((a, b) => (b - a))
 
     parentIdxFull.forEach((i: number) => {
-      console.log(i)
       for (let j = 0; j < termsArray.length; j++) {
         if (termsArray[j].parent === i) {
           if (!termsArray[i].children) {
@@ -257,8 +249,6 @@ export default function useKQueryParser() {
     }
 
     const addSpaces = (tArray: any) => {
-      console.log('starting for:', tArray)
-      //      debugger
       while (1) {
         let spacesDone = true
         for (let j = 0; j < tArray.length; j++) {
@@ -276,8 +266,6 @@ export default function useKQueryParser() {
           if (tArray[j + 1].termType !== KQueryTermTypes.space) {
             tArray.splice(j + 1, 0, { idx: tArray[j + 1].idx - 1, termType: KQueryTermTypes.space })
             spacesDone = false
-            console.log('here', [...tArray])
-            // debugger
             break
           }
         }
@@ -301,5 +289,6 @@ export default function useKQueryParser() {
     searchTermsString,
     parserError,
     searchTerms,
+    cursorPosition,
   }
 }
