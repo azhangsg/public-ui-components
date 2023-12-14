@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { getCursorPosition, setCursorPosition } from '../utils'
+import composables from '../composables'
 import { ref, nextTick, onMounted, watch } from 'vue'
 
 const props = defineProps({
@@ -25,12 +26,16 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['search-terms-changed'])
+const { parse, parserError, searchTermsString, cursorPosition } = composables.useKQueryParser()
+
+const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
 const plainInput = ref<HTMLElement>()
 
 const onKeyDown = (e: KeyboardEvent) => {
   if (e.code === 'Enter') {
+    emit('start-search')
+
     e.stopPropagation()
     e.preventDefault()
     return false
@@ -38,18 +43,22 @@ const onKeyDown = (e: KeyboardEvent) => {
 }
 
 const onClick = (e: FocusEvent) => {
-  fireChangedEvent(e)
+  startParse(e)
 }
 
 const onKeyUp = (e: any) => {
-  fireChangedEvent(e)
+  // if (e.code === 'Enter') {
+  //   emit('start-search')
+  //   return
+  // }
+  startParse(e)
 }
 
-const fireChangedEvent = (e: FocusEvent | KeyboardEvent) => {
+const startParse = (e: FocusEvent | KeyboardEvent) => {
   const htmlEl = e.target as HTMLElement
   const cursorPosition = getCursorPosition(htmlEl)
-  console.log('fireChangedEvent:', e, cursorPosition, htmlEl)
-  emit('search-terms-changed', htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+  console.log('startParse:', e, cursorPosition, htmlEl)
+  parse(htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
 }
 
 const setFieldValue = async (newStringValue: string, newCursorPosition: number) => {
@@ -64,15 +73,28 @@ const setFieldValue = async (newStringValue: string, newCursorPosition: number) 
   plainInput.value.innerText = newStringValue
   await nextTick()
   setCursorPosition(plainInput.value, newCursorPosition)
-
+  plainInput.value?.focus()
 }
 
+watch(parserError, (newValue) => {
+  console.log('!!! errorValue:', newValue)
+  emit('search-terms-error', newValue)
+})
+
+watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), (v) => {
+  console.log('fire changed based on result of parse')
+  emit('search-terms-changed', v.v, v.p)
+})
+
 watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
+  console.log('fire parse based on changed props ')
+  parse(item.v, item.p, false)
   setFieldValue(item.v, item.p)
 })
 
 onMounted(() => {
   console.log('onMOunted', props.initialValue)
+  parse(props.initialValue, props.initialCursorPosition, false)
   setFieldValue(props.initialValue, props.initialCursorPosition)
 })
 </script>

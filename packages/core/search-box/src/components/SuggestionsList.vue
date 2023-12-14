@@ -91,7 +91,7 @@ const setSuggestion = (suggestionType: SuggestionTypes, suggestionString: string
     }
     const searchTermsArr = finalString.split('')
     searchTermsArr.splice(cursorPos, 0, (cursorPos === 0 ? '' : ' ') + suggestionString + ': ')
-    emit('suggestion-selected', searchTermsArr.join(''), cursorPos + 2 + suggestionString.length)
+    emit('suggestion-selected', searchTermsArr.join(''), cursorPos + 3 + suggestionString.length)
   }
 }
 

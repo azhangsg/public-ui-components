@@ -25,6 +25,7 @@ export default function useKQueryParser() {
     syntaxError(recognizer: any, offendingSymbol: number, line: number, charPositionInLine: number, msg: string) {
       // @ts-ignore
       parserError.value = { message: `line ${line}:${charPositionInLine} ${msg}`, line, charPositionInLine }
+      console.log('ZZZZZ', parserError.value)
     }
   }
 
@@ -53,6 +54,7 @@ export default function useKQueryParser() {
         searchTermsString.value = queryString
       }
     }, 300)
+
   }
 
   watch(cursorPosition, (cursorPos:number) => {

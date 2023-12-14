@@ -11,15 +11,18 @@
 
         <PrettySearchFiled
           v-if="searchEntryType == SearchEntryTypes.pretty"
-          :cursor-position="cursorPosition"
-          :search-terms="searchTerms"
+          :initial-cursor-position="initialCursorPosition"
+          :initial-value="initialSearchTermsString"
           @search-terms-changed="searchTermsChanged"
+          @search-terms-error="searchTermsError"
         />
         <PlainSearchFiled
           v-if="searchEntryType == SearchEntryTypes.plain"
           :initial-cursor-position="initialCursorPosition"
-          :initial-value="initialSearchTermsValue"
+          :initial-value="initialSearchTermsString"
           @search-terms-changed="searchTermsChanged"
+          @search-terms-error="searchTermsError"
+          @start-search="startSearch"
         />
         <!-- </KDropdoZwn> -->
         <button
@@ -56,7 +59,9 @@
       :tabs="tabs"
     >
       <template #tab1>
-        <ResultsList />
+        <ResultsList
+          :search-terms-string="searchTermsString"
+        />
       </template>
       <template #tab2>
         <SuggestionsList
@@ -75,8 +80,8 @@
 
 import type { PropType } from 'vue'
 import { ref, computed } from 'vue'
-import composables from '../composables'
 import { SearchEntryTypes } from '../enums'
+import type { KQueryParserError } from '../types'
 
 import { ListIcon, TableIcon } from '@kong/icons'
 import PlainSearchFiled from './PlainSearchFiled.vue'
@@ -96,16 +101,17 @@ const props = defineProps({
 })
 
 const searchEntryType = ref<SearchEntryTypes>(SearchEntryTypes.pretty)
-const initialSearchTermsValue = ref('')
+const initialSearchTermsString = ref('')
+const searchTermsString = ref('')
+const cursorPosition = ref(0)
 const initialCursorPosition = ref(0)
+const parserError = ref<KQueryParserError>()
 
 const searchEntryTypeIcons = {
   plain: ListIcon,
   pretty: TableIcon,
 
 }
-
-const { searchTermsString, parse, parserError, searchTerms, cursorPosition } = composables.useKQueryParser()
 
 const tabs = computed(() => {
   return [
@@ -120,37 +126,43 @@ const tabs = computed(() => {
   ]
 })
 
-const activeTab = computed(() => {
-  return '#tab2'
-})
+const activeTab = ref('#tab2')
 
 const searchTermsChanged = (newSearchTermsString: string, newCursorPosition: number) => {
-  parse(newSearchTermsString, newCursorPosition, true)
+  console.log('SearchBox searchTermsChanged:', newSearchTermsString, newCursorPosition)
+  searchTermsString.value = newSearchTermsString
+  cursorPosition.value = newCursorPosition
+}
+
+const searchTermsError = (receivedError: KQueryParserError) => {
+  parserError.value = receivedError
 }
 
 const suggestionSelected = (newSearchTermsString: string, newCursorPosition: number) => {
   console.log('suggestionSelected:', newSearchTermsString, newCursorPosition)
-  parse(newSearchTermsString, newCursorPosition, false)
-  initialSearchTermsValue.value = newSearchTermsString
+  initialSearchTermsString.value = newSearchTermsString
   initialCursorPosition.value = newCursorPosition
 }
 
 const changeSearchEntryType = async () => {
   searchEntryType.value = searchEntryType.value === SearchEntryTypes.plain ? SearchEntryTypes.pretty : SearchEntryTypes.plain
 
-  initialSearchTermsValue.value = searchTermsString.value
+  initialSearchTermsString.value = searchTermsString.value
   initialCursorPosition.value = searchTermsString.value.length
-  console.log('changeSearchType to', searchEntryType.value, searchTermsString.value, searchTerms.value)
+  console.log('changeSearchType to', searchEntryType.value, searchTermsString.value)
 }
 
 const clearSearchTerms = () => {
-
-  parse('', 0, false)
-  if (searchEntryType.value === SearchEntryTypes.plain) {
-    initialSearchTermsValue.value = ''
-  }
+  initialSearchTermsString.value = ''
+  initialCursorPosition.value = 0
 }
 
+const startSearch = () => {
+  if (!parserError.value) {
+    console.log('start search')
+    activeTab.value = '#tab1'
+  }
+}
 </script>
 
 <style lang="scss" scoped>

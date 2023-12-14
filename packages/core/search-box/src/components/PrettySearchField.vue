@@ -20,35 +20,32 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue'
-
+import composables from '../composables'
 import { onMounted, watch, ref, nextTick } from 'vue'
 import SearchTerm from './SearchTerm.vue'
-import type { KQueryTerm } from './../types'
 import { setCursorPosition, getCursorPosition } from '../utils'
 
 const props = defineProps({
-  suggestion: {
-    type: Object,
-    default: null,
+  initialValue: {
+    type: String,
+    default: '',
   },
-  searchTerms: {
-    type: Object as PropType<Array<KQueryTerm>>,
-    required: true,
-  },
-  cursorPosition: {
+  initialCursorPosition: {
     type: Number,
     default: 0,
   },
 })
 
-const emit = defineEmits(['search-terms-changed'])
+const { searchTermsString, parse, parserError, searchTerms, cursorPosition } = composables.useKQueryParser()
+
+const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
 const prettyInput = ref<HTMLElement>()
 const additionalInput = ref<HTMLElement>()
 
 const onKeyDown = (e: KeyboardEvent) => {
   if (e.code === 'Enter') {
+    emit('start-search')
     e.stopPropagation()
     e.preventDefault()
     return false
@@ -56,47 +53,51 @@ const onKeyDown = (e: KeyboardEvent) => {
 }
 
 const onClick = (e: FocusEvent) => {
-  fireChangedEvent(e)
+  startParse(e)
 }
 
 const onKeyUp = (e: KeyboardEvent) => {
-  if (e.code === 'Space') {
-    return
-  }
-  fireChangedEvent(e)
-}
-let timeout: any
-const fireChangedEvent = (e: FocusEvent| KeyboardEvent) => {
-  if (e.code === 'Backspace') {
-    return
-  }
-  clearTimeout(timeout)
-  timeout = setTimeout(() => {
-    const htmlEl = prettyInput.value as HTMLElement
-    const cursorPosition = getCursorPosition(htmlEl)
-    console.log('fireChangedEvent:', e, cursorPosition, htmlEl)
-    emit('search-terms-changed', htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
-  }, 200)
+  startParse(e)
 }
 
-watch(() => ({ terms: props.searchTerms, pos: props.cursorPosition }), async (v) => {
-  console.log('watch searchTerms:', v)
+const startParse = (e: FocusEvent| KeyboardEvent) => {
+  const htmlEl = prettyInput.value as HTMLElement
+  const cursorPosition = getCursorPosition(htmlEl)
+  console.log('startParse:', e, cursorPosition, htmlEl)
+  parse(htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+}
+
+watch(parserError, (newValue) => {
+  console.log('!!! errorValue:', newValue)
+  emit('search-terms-error', newValue)
+})
+
+watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), (v) => {
+  console.log('fire changed based on result of parse')
   if (additionalInput.value) {
     additionalInput.value.innerHTML = '&nbsp;'
   }
-  await nextTick()
-  setCursorPosition(prettyInput.value, v.pos)
+  setCursorPosition(prettyInput.value, v.p)
+  emit('search-terms-changed', v.v, v.p)
+})
+
+watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
+  console.log('fire parse based on changed props ')
+  if (additionalInput.value) {
+    additionalInput.value.innerHTML = '&nbsp;'
+  }
+
+  parse(item.v, item.p, false)
 })
 
 onMounted(async () => {
-//  setFieldValue(props.suggestion)
   if (additionalInput.value) {
     additionalInput.value.innerHTML = '&nbsp;'
   }
-  console.log('onMOunted', props.searchTerms, props.cursorPosition)
+  console.log('onMOunted', props.initialValue, props.initialCursorPosition)
+  parse(props.initialValue, props.initialCursorPosition, false)
   await nextTick()
-  setCursorPosition(prettyInput.value, props.cursorPosition)
-  // prettyInput.value?.focus()
+  setCursorPosition(prettyInput.value, props.initialCursorPosition)
 })
 </script>
 
