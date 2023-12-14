@@ -4,7 +4,7 @@
     class="search-terms-pretty"
     contenteditable="true"
     placeholder="Add search criteria..."
-    @click.stop="onClick"
+    @click="onClick"
     @keydown.stop="onKeyDown"
     @keyup.stop="onKeyUp"
   >
@@ -65,12 +65,18 @@ const onKeyUp = (e: KeyboardEvent) => {
   }
   fireChangedEvent(e)
 }
-
+let timeout: any
 const fireChangedEvent = (e: FocusEvent| KeyboardEvent) => {
-  const htmlEl = e.target as HTMLElement
-  const cursorPosition = getCursorPosition(htmlEl)
-  console.log('fireChangedEvent:', e, cursorPosition, htmlEl)
-  emit('search-terms-changed', htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+  if (e.code === 'Backspace') {
+    return
+  }
+  clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    const htmlEl = prettyInput.value as HTMLElement
+    const cursorPosition = getCursorPosition(htmlEl)
+    console.log('fireChangedEvent:', e, cursorPosition, htmlEl)
+    emit('search-terms-changed', htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+  }, 200)
 }
 
 watch(() => ({ terms: props.searchTerms, pos: props.cursorPosition }), async (v) => {

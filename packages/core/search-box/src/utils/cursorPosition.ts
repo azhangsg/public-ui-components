@@ -1,6 +1,5 @@
 // @ts-nocheck
 export const setCursorPosition = (textDiv: HTMLElement|undefined, customPosition: number) => {
-  console.log('setCursorPosition:', customPosition)
   if (!textDiv || !textDiv.childNodes[0]) {
     return
   }
@@ -14,7 +13,6 @@ export const setCursorPosition = (textDiv: HTMLElement|undefined, customPosition
   let childNode = null
   let posInChild = customPosition
   const getNode = (childNodes) => {
-    console.log('starting for: ', childNodes)
     if (childNode) {
       return
     }
@@ -28,9 +26,7 @@ export const setCursorPosition = (textDiv: HTMLElement|undefined, customPosition
         continue
       }
       const content = n.wholeText || n.innerText || ''
-      console.log(`n:>${content}<`, 'pos:' + posInChild, n)
       if (posInChild < content.length) {
-        console.log('detected: ', n)
         childNode = n
         return
       }
@@ -46,7 +42,6 @@ export const setCursorPosition = (textDiv: HTMLElement|undefined, customPosition
   if (posInChild > contentLen) {
     posInChild = contentLen
   }
-  console.log('!!!!!!! childNode:', childNode, posInChild, textDiv.childNodes)
   selectedRange.setStart(childNode, posInChild)
 
   // collapse the range at boundaries
@@ -70,15 +65,11 @@ export const getCursorPosition = (textDiv: HTMLElement|undefined) => {
   if (!selection) {
     return 0
   }
-  console.log('selection:', selection)
   const range = selection.rangeCount > 0 ? selection?.getRangeAt(0) : null
   if (range) {
-    console.log('range:', range)
     const clonedRange = range?.cloneRange()
     clonedRange?.selectNodeContents(textDiv)
-    console.log('clonedRange:', clonedRange)
     clonedRange?.setEnd(range.endContainer, range?.endOffset)
-    console.log('clonedRange.toString:', clonedRange.toString())
     return clonedRange.toString().length
   }
   return 0

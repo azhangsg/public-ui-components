@@ -1,9 +1,6 @@
 <template>
   <div
     :class="`search-term ${searchTermClass}`"
-    @focZusout="onFocustout"
-    @keyZdown="onKeyDown"
-    @keyZup="onKeyUp"
   >
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
@@ -44,51 +41,9 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['search-term-changed', 'delete-right-term', 'focus-left'])
-
 const term = computed((): KQueryTerm => {
   return props.term
 })
-
-const onKeyDown = (e: KeyboardEvent) => {
-  if (e.code === 'Enter') {
-    e.stopPropagation()
-    e.preventDefault()
-    return false
-  }
-}
-
-const onKeyUp = (e: any) => {
-  console.log('searchTerm:', e, e.target.innerText)
-  if (term.value.children) {
-    return
-  }
-
-  if (e.code === 'Space') {
-    if (!e.target.innerText.startsWith('"')) {
-      emit('search-term-changed')
-    }
-    return
-  }
-
-  if (e.code === 'Backspace') {
-    if (e.target.innerText === '') {
-      emit('delete-right-term')
-    }
-
-  }
-
-  // emit('search-terms-changed', e === null || !e.target ? '' : e.target.innerText)
-}
-
-const onFocustout = (e:any) => {
-  console.log('on onFocustout:', e, e.target.className)
-  if (!e.target.className.split(' ').includes('empty')) {
-    emit('search-term-changed')
-  } else if (e.target.innerText !== '') {
-    emit('search-term-changed')
-  }
-}
 
 const searchTermClass = computed(() => {
   if (term.value.termType !== KQueryTermTypes.clause || !term.value?.children) {

@@ -38,7 +38,6 @@ export default function useKQueryParser() {
   const parse = (queryString: string, cursorPos: number, debounce:boolean = true): void => {
     queryString = queryString.trimStart()
     console.log(`parse called: >${queryString}<`, cursorPos)
-
     clearTimeout(timeout)
 
     // no need debounce here
