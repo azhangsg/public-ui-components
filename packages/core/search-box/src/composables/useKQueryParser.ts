@@ -36,38 +36,37 @@ export default function useKQueryParser() {
   let timeout: any
 
   // triggers update of searchString and parse process
-  const parse = (queryString: string, cursorPos: number, debounce:boolean = true): void => {
-    queryString = queryString.trimStart()
+  const parse = (queryStringOrig: string, cursorPos: number, debounce:boolean = true): void => {
+    const queryString = queryStringOrig.trimStart()
     console.log(`parse called: >${queryString}<`, cursorPos)
+    console.log(`   while old: >${searchTermsString.value}<`, cursorPosition.value)
     clearTimeout(timeout)
 
     // no need debounce here
     if (queryString === '' || !debounce) {
-      cursorPosition.value = cursorPos
-      searchTermsString.value = queryString
+      doParse(queryString, cursorPos)
       return
     }
 
     timeout = setTimeout(() => {
       if (queryString || queryString === '') {
-        cursorPosition.value = cursorPos
-        searchTermsString.value = queryString
+        doParse(queryString, cursorPos)
       }
     }, 300)
 
   }
 
-  watch(cursorPosition, (cursorPos:number) => {
-    console.log('cursor position changed:', cursorPos)
-  })
+  const doParse = (qsString: string, cursorPos: number) => {
+    console.log(`in the doParse:>${qsString}<`)
 
-  watch(searchTermsString, (qsString: string) => {
-    console.log(`in the watch:>${qsString}<`)
-    parserError.value = undefined
     if (qsString.trim() === '') {
+      parserError.value = undefined
+      searchTermsString.value = ''
+      cursorPosition.value = cursorPos
       searchTerms.value = []
       return
     }
+
     const termsArray:Array<KQueryTerm> = []
 
     const chars = new CharStream(qsString) // replace this with a FileStream as required
@@ -280,10 +279,9 @@ export default function useKQueryParser() {
     // termsArray.push({ type: 'clause' })
     console.log('termsArray final:', [...termsArray])
     searchTerms.value = termsArray
-
-    //    console.log('termsArray:', JSON.stringify(termsArray, null, 2))
-
-  })
+    searchTermsString.value = qsString
+    cursorPosition.value = cursorPos
+  }
 
   return {
     parse,
