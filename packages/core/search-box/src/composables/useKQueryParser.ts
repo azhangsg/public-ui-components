@@ -57,10 +57,15 @@ export default function useKQueryParser() {
   }
 
   const doParse = (qsString: string, cursorPos: number) => {
+
+    if (qsString === searchTermsString.value) {
+      cursorPosition.value = cursorPos
+      return
+    }
     console.log(`in the doParse:>${qsString}<`)
 
+    parserError.value = undefined
     if (qsString.trim() === '') {
-      parserError.value = undefined
       searchTermsString.value = ''
       cursorPosition.value = cursorPos
       searchTerms.value = []

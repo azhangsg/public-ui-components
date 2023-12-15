@@ -11,13 +11,16 @@
 
         <PrettySearchFiled
           v-if="searchEntryType == SearchEntryTypes.pretty"
+          :key="currentKey.toString()"
           :initial-cursor-position="initialCursorPosition"
           :initial-value="initialSearchTermsString"
           @search-terms-changed="searchTermsChanged"
           @search-terms-error="searchTermsError"
+          @start-search="startSearch"
         />
         <PlainSearchFiled
           v-if="searchEntryType == SearchEntryTypes.plain"
+          :key="currentKey.toString()"
           :initial-cursor-position="initialCursorPosition"
           :initial-value="initialSearchTermsString"
           @search-terms-changed="searchTermsChanged"
@@ -106,6 +109,7 @@ const searchTermsString = ref('')
 const cursorPosition = ref(0)
 const initialCursorPosition = ref(0)
 const parserError = ref<KQueryParserError>()
+const currentKey = ref<number>(new Date().getTime())
 
 const searchEntryTypeIcons = {
   plain: ListIcon,
@@ -138,26 +142,37 @@ const searchTermsError = (receivedError: KQueryParserError) => {
   parserError.value = receivedError
 }
 
-const suggestionSelected = (newSearchTermsString: string, newCursorPosition: number) => {
-  console.log('suggestionSelected:', newSearchTermsString, newCursorPosition)
+const resetSearchField = (newSearchTermsString: string, newCursorPosition: number) => {
+
+  let resetKey = false
+  if (newSearchTermsString === initialSearchTermsString.value || newCursorPosition === initialCursorPosition.value) {
+    resetKey = true
+  }
   initialSearchTermsString.value = newSearchTermsString
   initialCursorPosition.value = newCursorPosition
+  if (resetKey) {
+    currentKey.value += 1
+  }
+}
+
+const suggestionSelected = (newSearchTermsString: string, newCursorPosition: number) => {
+  console.log('suggestionSelected:', newSearchTermsString, newCursorPosition)
+  resetSearchField(newSearchTermsString, newCursorPosition)
 }
 
 const changeSearchEntryType = async () => {
   searchEntryType.value = searchEntryType.value === SearchEntryTypes.plain ? SearchEntryTypes.pretty : SearchEntryTypes.plain
-
-  initialSearchTermsString.value = searchTermsString.value
-  initialCursorPosition.value = searchTermsString.value.length
   console.log('changeSearchType to', searchEntryType.value, searchTermsString.value)
+  resetSearchField(searchTermsString.value, searchTermsString.value.length)
 }
 
 const clearSearchTerms = () => {
-  initialSearchTermsString.value = ''
-  initialCursorPosition.value = 0
+  console.log('clearSearchTerms', initialSearchTermsString.value)
+  resetSearchField('', 0)
 }
 
 const startSearch = () => {
+  console.log('start search??')
   if (!parserError.value) {
     console.log('start search')
     activeTab.value = '#tab1'

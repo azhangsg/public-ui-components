@@ -7,15 +7,18 @@
     @click="onClick"
     @keydown.stop="onKeyDown"
     @keyup.stop="onKeyUp"
+    v-html="content"
+  />
+
+  <div
+    ref="shadowInput"
+    class="search-terms-pretty-shadow"
   >
     <SearchTerm
       v-for="term in searchTerms"
       :key="term.key"
       :term="term"
     />
-    <span
-      ref="additionalInput"
-    >&nbsp;</span>
   </div>
 </template>
 
@@ -38,10 +41,11 @@ const props = defineProps({
 
 const { searchTermsString, parse, parserError, searchTerms, cursorPosition } = composables.useKQueryParser()
 
+const content = ref('')
 const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
 const prettyInput = ref<HTMLElement>()
-const additionalInput = ref<HTMLElement>()
+const shadowInput = ref<HTMLElement>()
 
 const onKeyDown = (e: KeyboardEvent) => {
   if (e.code === 'Enter') {
@@ -61,6 +65,7 @@ const onKeyUp = (e: KeyboardEvent) => {
 }
 
 const startParse = (e: FocusEvent| KeyboardEvent) => {
+
   const htmlEl = prettyInput.value as HTMLElement
   const cursorPosition = getCursorPosition(htmlEl)
   console.log('startParse:', e, cursorPosition, htmlEl)
@@ -72,28 +77,26 @@ watch(parserError, (newValue) => {
   emit('search-terms-error', newValue)
 })
 
-watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), (v) => {
+watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (newValue, oldValue) => {
   console.log('fire changed based on result of parse')
-  if (additionalInput.value) {
-    additionalInput.value.innerHTML = '&nbsp;'
+  if (newValue.v !== oldValue.v) {
+    await nextTick()
+    console.log(shadowInput.value?.innerHTML)
+    content.value = (shadowInput.value?.innerHTML || '') + '<span>&nbsp;</span>'
+    await nextTick()
+    setCursorPosition(prettyInput.value, newValue.p)
   }
-  setCursorPosition(prettyInput.value, v.p)
-  emit('search-terms-changed', v.v, v.p)
+
+  emit('search-terms-changed', newValue.v, newValue.p)
 })
 
 watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
   console.log('fire parse based on changed props ')
-  if (additionalInput.value) {
-    additionalInput.value.innerHTML = '&nbsp;'
-  }
-
+  content.value = (shadowInput.value?.innerHTML || '') + '<span>&nbsp;</span>'
   parse(item.v, item.p, false)
 })
 
 onMounted(async () => {
-  if (additionalInput.value) {
-    additionalInput.value.innerHTML = '&nbsp;'
-  }
   console.log('onMOunted', props.initialValue, props.initialCursorPosition)
   parse(props.initialValue, props.initialCursorPosition, false)
   await nextTick()
@@ -121,4 +124,8 @@ onMounted(async () => {
     width:4px;
   }
 }
+.search-terms-pretty-shadow {
+  display: none;
+}
+
 </style>
