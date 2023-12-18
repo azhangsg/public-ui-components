@@ -9,6 +9,8 @@ lay<template>
       />
     </main>
   </div>
+  <p />
+  <hr>
   PAT:
   <p />
   <input
@@ -27,10 +29,11 @@ const recentSearchesFetcher = async () => {
   return [
     'A',
     '-AA A',
-    '(geo.country: "United Kingdom" OR geo.country: Iceland) AND geo.city: London',
-    '@geo.country:("United Kingdom" OR Iceland) @geo.city:LOndon - this pone doesn\'t work till TPS-1813 is resolved',
+    '(geo.country:"United Kingdom" OR geo.country:Iceland) AND geo.city:London',
+    '@geo.country:("United Kingdom" OR Iceland) @geo.city:LOndon - this one doesn\'t work till TPS-1813 is resolved',
     'KAuth',
     'Kauth OR Kaudit',
+    'name:default OR name:nix-cipher@null.net',
     'Kauth AND Production',
     'Kauth AND -Production',
     'Kauth Production',
@@ -56,7 +59,7 @@ const resultsFetcher = async (q) => {
   if (!patKey.value) {
     return { error: 'no pat key' }
   }
-  const resp = await axios.get('/kong-api/v0/search', {
+  const resp = await axios.get(`${window.location.hostname === 'localhost' ? '/kong-api' : 'whttps://us.api.konghq.tech'}/v0/search`, {
     params: {
       q,
     },

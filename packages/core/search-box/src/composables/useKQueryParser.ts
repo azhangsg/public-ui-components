@@ -37,8 +37,8 @@ export default function useKQueryParser() {
 
   // triggers update of searchString and parse process
   const parse = (queryStringOrig: string, cursorPos: number, debounce:boolean = true): void => {
-    const queryString = queryStringOrig.trimStart()
-    console.log(`parse called: >${queryString}<`, cursorPos)
+    const queryString = queryStringOrig.trimStart().replace('\n', '')
+    console.log(`parse called: >${queryString}<`, cursorPos, Object.assign([], queryString))
     console.log(`   while old: >${searchTermsString.value}<`, cursorPosition.value)
     clearTimeout(timeout)
     // no need debounce here

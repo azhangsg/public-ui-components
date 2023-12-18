@@ -427,8 +427,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0(vue@3.3.4)
       '@kong/kquery-parser':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.7.0
+        version: 0.7.0
       antlr4:
         specifier: 4.13.1-patch-1
         version: 4.13.1-patch-1
@@ -2116,8 +2116,8 @@ packages:
       vue-router: 4.2.4(vue@3.3.4)
     dev: true
 
-  /@kong/kquery-parser@0.4.0:
-    resolution: {integrity: sha512-LCeM4BBZx8x+QHJJiBlybqjWSKkhaDrhuST/pRIKanPxQOAUjDG+KjOWJvYL4cJgvfAP8NzKfD9BvYOO5qltfw==}
+  /@kong/kquery-parser@0.7.0:
+    resolution: {integrity: sha512-DFZWe5E08DUuBXA7B3yegRTF2o7+yqfw9YDKZiqV8JsSuavC1m/BUvYTdKYmqjKSpgxtlqa0xm+h2rM5BnB2bQ==}
     dependencies:
       antlr4: 4.13.1-patch-1
     dev: false
