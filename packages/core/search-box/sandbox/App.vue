@@ -61,7 +61,7 @@ const resultsFetcher = async (q) => {
   }
   const resp = await axios.get(`${window.location.hostname === 'localhost' ? '/kong-api' : 'whttps://us.api.konghq.tech'}/v0/search`, {
     params: {
-      q,
+      q: q.trim(),
     },
     headers: {
       authorization: `Bearer ${patKey.value}`,

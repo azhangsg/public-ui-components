@@ -3,7 +3,7 @@
     ResultsList:
 
     <pre>
-      ?q={{ encodeURI(searchTermsString) }}
+      ?q={{ encodeURIComponent(searchTermsString.trim()) }}
     </pre>
 
     <pre>
