@@ -5,8 +5,8 @@
     contenteditable="true"
     placeholder="Add search criteria..."
     @click="onClick"
-    @keydown.stop="onKeyDown"
-    @keyup.stop="onKeyUp"
+    @keydown="onKeyDown"
+    @keyup="onKeyUp"
     v-html="content"
   />
 
@@ -48,6 +48,7 @@ const prettyInput = ref<HTMLElement>()
 const shadowInput = ref<HTMLElement>()
 
 const onKeyDown = (e: KeyboardEvent) => {
+  console.log('keydown:', e)
   if (e.code === 'Enter') {
     emit('start-search')
     e.stopPropagation()
@@ -64,9 +65,10 @@ const onKeyUp = (e: KeyboardEvent) => {
   startParse(e)
 }
 
-const startParse = (e: FocusEvent| KeyboardEvent) => {
+const startParse = async (e: FocusEvent| KeyboardEvent) => {
 
   const htmlEl = prettyInput.value as HTMLElement
+  await nextTick()
   const cursorPosition = getCursorPosition(htmlEl)
   console.log('startParse:', e, cursorPosition, htmlEl)
   parse(htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)

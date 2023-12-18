@@ -63,6 +63,7 @@
     >
       <template #tab1>
         <ResultsList
+          :results="searchResults"
           :search-terms-string="searchTermsString"
         />
       </template>
@@ -101,6 +102,10 @@ const props = defineProps({
     type: Function as PropType<() => Promise<string[]>>,
     default: () => ([]),
   },
+  fetchResults: {
+    type: Function as PropType<(searchQuery: string) => Promise<Object>>,
+    default: () => ({}),
+  },
 })
 
 const searchEntryType = ref<SearchEntryTypes>(SearchEntryTypes.pretty)
@@ -110,6 +115,7 @@ const cursorPosition = ref(0)
 const initialCursorPosition = ref(0)
 const parserError = ref<KQueryParserError>()
 const currentKey = ref<number>(new Date().getTime())
+const searchResults = ref({})
 
 const searchEntryTypeIcons = {
   plain: ListIcon,
@@ -171,13 +177,16 @@ const clearSearchTerms = () => {
   resetSearchField('', 0)
 }
 
-const startSearch = () => {
+const startSearch = async () => {
   console.log('start search??')
-  if (!parserError.value) {
-    console.log('start search')
-    activeTab.value = '#tab1'
+  if (parserError.value) {
+    return
   }
+  console.log('start search')
+  activeTab.value = '#tab1'
+  searchResults.value = await props.fetchResults(searchTermsString.value)
 }
+
 </script>
 
 <style lang="scss" scoped>

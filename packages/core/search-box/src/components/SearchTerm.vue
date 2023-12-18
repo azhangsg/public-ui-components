@@ -4,7 +4,7 @@
   >
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
-      class="col"
+      class="col grouping-start"
     >(</span>
     <span
       v-if="term.termType === KQueryTermTypes.space"
@@ -19,7 +19,7 @@
 
     <span
       v-if="term.termType === KQueryTermTypes.grouping"
-      class="col"
+      class="col grouping-end"
     >)</span>
   </div>
   <span
@@ -65,6 +65,13 @@ const searchTermClass = computed(() => {
 
     .col {
       color: magenta;
+      padding: 0 2px;
+      &.grouping-start {
+        padding-right: 4px;
+      }
+      &.grouping-end {
+        padding-left: 4px;
+      }
     }
 
     div {
@@ -97,7 +104,7 @@ const searchTermClass = computed(() => {
     }
 
     &.exclusion {
-      background-color: white;
+      background-color: blue;
       color: magenta;
     }
 
@@ -106,8 +113,9 @@ const searchTermClass = computed(() => {
       // border: 1px solid gray;
     }
     &.clause {
-      background-color: lightgray;
+      background-color: blue;
       border-radius: 6px;
+      color: white;
       padding: 0 6px;
     }
     &.empty {

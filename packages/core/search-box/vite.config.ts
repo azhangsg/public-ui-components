@@ -1,4 +1,4 @@
-import sharedViteConfig, { sanitizePackageName } from '../../../vite.config.shared'
+import sharedViteConfig, { sanitizePackageName, getApiProxies } from '../../../vite.config.shared'
 import { resolve } from 'path'
 import { defineConfig, mergeConfig } from 'vite'
 
@@ -17,6 +17,13 @@ const config = mergeConfig(sharedViteConfig, defineConfig({
       fileName: (format) => `${sanitizedPackageName}.${format}.js`,
     },
   },
+  server: {
+    proxy: {
+      // Add the API proxies to inject the Authorization header
+      ...getApiProxies(),
+    },
+  },
+
 }))
 
 // If we are trying to preview a build of the local `package/search-box/sandbox` directory,

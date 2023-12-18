@@ -189,10 +189,10 @@ export const getApiProxies = (pathToRoot: string = '../../../.') => {
       },
     },
 
-    // Global v2 APIs
-    '^/kong-api/v2': {
+    // v{number} global APIs (proxied)
+    '^/kong-api/v[\\d+]': {
       target: env.VITE_KONNECT_GLOBAL,
-      rewrite: (path: string) => path.replace('/kong-api', ''),
+      rewrite: (path: string) => (path.replace(/^\/kong-api/, '')),
       changeOrigin: true,
       headers: {
         ...konnectAuthHeader,

@@ -5,6 +5,10 @@
     <pre>
       ?q={{ encodeURI(searchTermsString) }}
     </pre>
+
+    <pre>
+      {{ JSON.stringify(results, null, 2 ) }}
+    </pre>
   </div>
 </template>
 
@@ -13,6 +17,10 @@ defineProps({
   searchTermsString: {
     type: String,
     default: '',
+  },
+  results: {
+    type: Object,
+    default: () => ({}),
   },
 })
 </script>

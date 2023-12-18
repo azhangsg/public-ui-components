@@ -25,7 +25,6 @@ export default function useKQueryParser() {
     syntaxError(recognizer: any, offendingSymbol: number, line: number, charPositionInLine: number, msg: string) {
       // @ts-ignore
       parserError.value = { message: `line ${line}:${charPositionInLine} ${msg}`, line, charPositionInLine }
-      console.log('ZZZZZ', parserError.value)
     }
   }
 
@@ -33,6 +32,7 @@ export default function useKQueryParser() {
   const searchTermsString = ref<string>('')
   const searchTerms = ref <KQueryTerm[]>([])
   const cursorPosition = ref<number>(0)
+  const debounces = ref<number>(0)
   let timeout: any
 
   // triggers update of searchString and parse process
@@ -41,16 +41,16 @@ export default function useKQueryParser() {
     console.log(`parse called: >${queryString}<`, cursorPos)
     console.log(`   while old: >${searchTermsString.value}<`, cursorPosition.value)
     clearTimeout(timeout)
-
     // no need debounce here
-    if (queryString === '' || !debounce) {
+    if (queryString === '' || !debounce || debounces.value > 3) {
       doParse(queryString, cursorPos)
       return
     }
-
+    debounces.value++
     timeout = setTimeout(() => {
       if (queryString || queryString === '') {
         doParse(queryString, cursorPos)
+        debounces.value = 0
       }
     }, 300)
 
@@ -58,7 +58,7 @@ export default function useKQueryParser() {
 
   const doParse = (qsString: string, cursorPos: number) => {
 
-    if (qsString === searchTermsString.value) {
+    if (qsString.trim() === searchTermsString.value.trim()) {
       cursorPosition.value = cursorPos
       return
     }
@@ -212,6 +212,27 @@ export default function useKQueryParser() {
 
     console.log('termsArray:', [...termsArray])
 
+    // only leave most inner clauses
+    const clauseIdx = []
+
+    for (let j = 0; j < termsArray.length; j++) {
+      if (termsArray[j].termType === KQueryTermTypes.clause) {
+        for (let i = j + 1; i < termsArray.length; i++) {
+          if (termsArray[i].termType === KQueryTermTypes.clauseEnd) {
+            break
+          }
+          if (termsArray[i].termType === KQueryTermTypes.clause) {
+            clauseIdx.unshift(j)
+            break
+          }
+        }
+      }
+    }
+
+    clauseIdx.forEach(c => {
+      termsArray.splice(c, 1)
+    })
+
     const parentIdx = []
     const parentIdxFull = []
     for (let j = 0; j < termsArray.length; j++) {
@@ -232,7 +253,6 @@ export default function useKQueryParser() {
       }
     }
 
-    console.log('termsArray with parent assigned:', [...termsArray])
     parentIdxFull.sort((a, b) => (b - a))
 
     parentIdxFull.forEach((i: number) => {
@@ -252,6 +272,7 @@ export default function useKQueryParser() {
         termsArray.splice(j, 1)
       }
     }
+    console.log('termsArray with parent assigned:', [...termsArray], clauseIdx)
 
     const addSpaces = (tArray: any) => {
       while (1) {
@@ -268,6 +289,7 @@ export default function useKQueryParser() {
           if (tArray[j].termType === KQueryTermTypes.fieldName && tArray[j + 1].termType === KQueryTermTypes.fieldValue) {
             continue
           }
+
           if (tArray[j + 1].termType !== KQueryTermTypes.space) {
             tArray.splice(j + 1, 0, { idx: tArray[j + 1].idx - 1, termType: KQueryTermTypes.space })
             spacesDone = false

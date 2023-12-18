@@ -432,13 +432,16 @@ importers:
       antlr4:
         specifier: 4.13.1-patch-1
         version: 4.13.1-patch-1
+      axios:
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@kong/design-tokens':
         specifier: ^1.9.1
         version: 1.9.1
       '@kong/kongponents':
         specifier: 9.0.0-alpha.36
-        version: 9.0.0-alpha.36(vue-router@4.2.4)(vue@3.3.4)
+        version: 9.0.0-alpha.36(axios@1.6.2)(vue-router@4.2.4)(vue@3.3.4)
       vue:
         specifier: ^3.3.4
         version: 3.3.4
@@ -2088,16 +2091,17 @@ packages:
       vue-router: 4.2.4(vue@3.3.4)
     dev: false
 
-  /@kong/kongponents@9.0.0-alpha.36(vue-router@4.2.4)(vue@3.3.4):
+  /@kong/kongponents@9.0.0-alpha.36(axios@1.6.2)(vue-router@4.2.4)(vue@3.3.4):
     resolution: {integrity: sha512-407CLHmttYJamYjj4Sa7bq/nLScq1DdSTcdieuU7sCDTDqJtaCzM5TpgNQ1Ffp9RBa1Daovza74yiT+2gpKkWQ==}
     engines: {node: '>=v16.20.2'}
     peerDependencies:
+      axios: ^0.27.2
       vue: '>= 3.3.4 < 4'
       vue-router: ^4.2.5
     dependencies:
       '@kong/icons': 1.8.3(vue@3.3.4)
       '@popperjs/core': 2.11.8
-      axios: 0.27.2
+      axios: 1.6.2
       date-fns: 2.30.0
       date-fns-tz: 2.0.0(date-fns@2.30.0)
       focus-trap: 7.5.4
@@ -2110,8 +2114,6 @@ packages:
       vue: 3.3.4
       vue-draggable-next: 2.2.1(sortablejs@1.15.1)(vue@3.3.4)
       vue-router: 4.2.4(vue@3.3.4)
-    transitivePeerDependencies:
-      - debug
     dev: true
 
   /@kong/kquery-parser@0.4.0:
