@@ -4,14 +4,13 @@
     :class="`search-terms-pretty ${searchTermsString ? '' : ' empty'}`"
     contenteditable="false"
     placeholder="Add search criteria..."
-    tabindex="-1"
   >
     <SearchTerm
       v-for="term in searchTerms"
       :key="term.key"
       :term="term"
-      @fZocus-next="onFocusNext"
-      @fZocus-prev="onFocusPrev"
+      @focus-next="onFocusNext"
+      @focus-prev="onFocusPrev"
       @sZtart-search="onStartSearch"
       @uZpdate-term="onUpdateTerm"
     />
@@ -23,6 +22,7 @@ import composables from '../composables'
 import { onMounted, watch, ref, nextTick } from 'vue'
 import SearchTerm from './SearchTerm.vue'
 import { setCursorPosition } from '../utils'
+import { KQueryTermTypes } from '../enums'
 
 const props = defineProps({
   initialValue: {
@@ -47,7 +47,19 @@ const onFocusNext = (dataKey: string) => {
   if (currentIdx === -1 || currentIdx === searchTerms.value.length - 1) {
     return
   }
-  (prettyInput.value?.querySelector(`[data-key="${searchTerms.value[currentIdx + 1].key}"]`) as HTMLElement).focus()
+  let nextEditableKey = ''
+  for (let j = currentIdx + 1; j < searchTerms.value.length; j++) {
+    if (![KQueryTermTypes.clause, KQueryTermTypes.clauseEnd].includes(searchTerms.value[j].termType)) {
+      nextEditableKey = searchTerms.value[j].key
+      break
+    }
+  }
+  const nextEl = prettyInput.value?.querySelector(`[data-key="${nextEditableKey}"]`) as HTMLElement
+  console.log('nextEl:', nextEl)
+  if (!nextEl) {
+
+  }
+  setCursorPosition(nextEl, 0)
 }
 
 const onFocusPrev = (dataKey: string) => {
@@ -56,7 +68,16 @@ const onFocusPrev = (dataKey: string) => {
   if (currentIdx < 1 || currentIdx === searchTerms.value.length) {
     return
   }
-  const prevEl = (prettyInput.value?.querySelector(`[data-key="${searchTerms.value[currentIdx - 1].key}"]`) as HTMLElement)
+
+  let prevEditableKey = ''
+  for (let j = currentIdx - 1; j >= 0; j--) {
+    if (![KQueryTermTypes.clause, KQueryTermTypes.clauseEnd].includes(searchTerms.value[j].termType)) {
+      prevEditableKey = searchTerms.value[j].key
+      break
+    }
+  }
+  const prevEl = prettyInput.value?.querySelector(`[data-key="${prevEditableKey}"]`) as HTMLElement
+
   console.log('prevEl:', prevEl)
   if (!prevEl) {
     console.log('focusing??')

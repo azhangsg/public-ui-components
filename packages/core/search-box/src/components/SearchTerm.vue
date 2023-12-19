@@ -1,7 +1,7 @@
 <template>
   <span
     :class="`search-term ${term.termType}`"
-    contenteditable="true"
+    :contenteditable="![KQueryTermTypes.clause, KQueryTermTypes.clauseEnd].includes(term.termType)"
     :data-key="term.key"
     @focusout="onFocusOut"
     @keydown="onKeyDown"
@@ -15,6 +15,7 @@
 import type { PropType } from 'vue'
 import type { KQueryTerm } from './../types'
 import { getCursorPosition } from '../utils'
+import { KQueryTermTypes } from '../enums'
 
 const props = defineProps({
   term: {
@@ -38,12 +39,15 @@ const onKeyDown = (e: KeyboardEvent) => {
   const cursorPos = getCursorPosition(targetEl)
   console.log('searchTerm keyDown:', e, targetEl.getAttribute('data-key'), cursorPos, targetEl.innerText.length)
   if (e.code === 'ArrowRight' && cursorPos === targetEl.innerText.length) {
+    e.stopPropagation()
+    e.preventDefault()
     emit('focus-next', targetEl.getAttribute('data-key'))
   }
   if (e.code === 'ArrowLeft' && cursorPos === 0) {
+    e.stopPropagation()
+    e.preventDefault()
     emit('focus-prev', targetEl.getAttribute('data-key'))
   }
-
 }
 
 const onKeyUp = (e: KeyboardEvent) => {
@@ -53,6 +57,7 @@ const onKeyUp = (e: KeyboardEvent) => {
 }
 
 const onFocusOut = (e:FocusEvent) => {
+  return
   const targetEl = (e.target as HTMLElement)
 
   console.log('searchTerm focusOut:', e, `termValue:>${props.term.termValue}< innerText:>${targetEl.innerText}<, innerHtml:>${targetEl.innerHTML}<`)

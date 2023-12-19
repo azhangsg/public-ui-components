@@ -9,41 +9,7 @@ export const setCursorPosition = (textDiv: HTMLElement|undefined, customPosition
   // create a range
   const selectedRange = document.createRange()
 
-  // set starting position of the cursor in the texts
-  let childNode = null
-  let posInChild = customPosition
-  const getNode = (childNodes) => {
-    if (childNode) {
-      return
-    }
-    for (let i = 0; i < childNodes.length; i++) {
-      if (childNode) {
-        return
-      }
-      const n = childNodes.item(i)
-      if (n.childNodes && n.childNodes.length > 0) {
-        getNode(n.childNodes)
-        continue
-      }
-      const content = n.wholeText || n.innerText || ''
-      if (posInChild < content.length) {
-        childNode = n
-        return
-      }
-      posInChild -= content.length
-    }
-  }
-
-  getNode(textDiv.children)
-  if (!childNode) {
-    childNode = textDiv.childNodes[textDiv.childNodes.length - 1]
-  }
-  const contentLen = (childNode.wholeText || childNode.innerText || '').length
-  if (posInChild > contentLen) {
-    posInChild = contentLen
-  }
-  selectedRange.setStart(childNode, posInChild)
-
+  selectedRange.setStart(textDiv.childNodes[0], customPosition)
   // collapse the range at boundaries
   selectedRange.collapse(true)
 
