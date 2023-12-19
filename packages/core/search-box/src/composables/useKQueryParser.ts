@@ -21,6 +21,8 @@ export default function useKQueryParser() {
 
   const parserError = ref<KQueryParserError>()
 
+  const emptyTerm = { idx: 0, termType: KQueryTermTypes.space, key: 'empty', termValue: ' ' }
+
   class KQueryErrorListener implements ErrorListener<any> {
     syntaxError(recognizer: any, offendingSymbol: number, line: number, charPositionInLine: number, msg: string) {
       // @ts-ignore
@@ -30,7 +32,7 @@ export default function useKQueryParser() {
 
   // here is where we keep string (plain) search string
   const searchTermsString = ref<string>('')
-  const searchTerms = ref <KQueryTerm[]>([])
+  const searchTerms = ref<KQueryTerm[]>([emptyTerm])
   const cursorPosition = ref<number>(0)
   const debounces = ref<number>(0)
   let timeout: any
@@ -53,7 +55,6 @@ export default function useKQueryParser() {
         debounces.value = 0
       }
     }, 300)
-
   }
 
   const doParse = (qsString: string, cursorPos: number) => {
@@ -64,11 +65,16 @@ export default function useKQueryParser() {
     }
     console.log(`in the doParse:>${qsString}<`)
 
+    const dtKey = new Date().getTime()
+    const formatKey = (idx: number, termType: KQueryTermTypes, value?: string) => {
+      return `${idx}-${dtKey}-${termType}${value ? '-' + value.replaceAll('"', '-') : ''}`
+    }
+
     parserError.value = undefined
     if (qsString.trim() === '') {
       searchTermsString.value = ''
       cursorPosition.value = cursorPos
-      searchTerms.value = []
+      searchTerms.value = [emptyTerm]
       return
     }
 
@@ -85,11 +91,6 @@ export default function useKQueryParser() {
 
     const tree = parser.result()
     console.log('prefix notation:', tree?.toStringTree(['result'], parser))
-
-    const dtKey = new Date().getTime()
-    const formatKey = (idx: number, termType: KQueryTermTypes, value?: string) => {
-      return `${idx}-${dtKey}-${termType}${value ? '-' + value : ''}`
-    }
 
     class MyTreeWalker extends KQueryParserListener {
       enterFieldValue = (ctx: FieldValueContext) => {
@@ -112,6 +113,14 @@ export default function useKQueryParser() {
           key: formatKey(ctx.start.start, KQueryTermTypes.fieldName, termValue),
           termValue,
         })
+
+        termsArray.push({
+          idx: ctx.start.stop,
+          termType: KQueryTermTypes.colon,
+          key: formatKey(ctx.start.stop, KQueryTermTypes.fieldName, ':'),
+          termValue: ':',
+        })
+
       }
 
       enterClause = (ctx: ClauseContext) => {
@@ -120,6 +129,7 @@ export default function useKQueryParser() {
           idx,
           key: formatKey(idx, KQueryTermTypes.clause),
           termType: KQueryTermTypes.clause,
+          termValue: '',
         })
       }
 
@@ -129,6 +139,8 @@ export default function useKQueryParser() {
           idx,
           termType: KQueryTermTypes.clauseEnd,
           key: formatKey(idx, KQueryTermTypes.clauseEnd),
+          started: ctx.start.start,
+          termValue: '',
         })
       }
 
@@ -150,6 +162,7 @@ export default function useKQueryParser() {
           idx,
           key: formatKey(idx, KQueryTermTypes.grouping),
           termType: KQueryTermTypes.grouping,
+          termValue: '(',
         })
       }
 
@@ -159,6 +172,7 @@ export default function useKQueryParser() {
           idx,
           key: formatKey(idx, KQueryTermTypes.groupingEnd),
           termType: KQueryTermTypes.groupingEnd,
+          termValue: ')',
         })
       }
 
@@ -168,19 +182,35 @@ export default function useKQueryParser() {
 
           const idx = oE.start.start
           const termValue = qsString.substring(oE.start.start, oE.start.stop + 1)
+
           termsArray.push({
             idx,
-            key: formatKey(idx, KQueryTermTypes.and),
+            key: formatKey(idx, KQueryTermTypes.space, ' '),
+            termType: KQueryTermTypes.space,
+            termValue: ' ',
+          })
+
+          termsArray.push({
+            idx: idx + 1,
+            key: formatKey(idx + 1, KQueryTermTypes.and),
             termType: KQueryTermTypes.and,
             termValue,
-
+          })
+          termsArray.push({
+            idx: idx + 4,
+            key: formatKey(idx + 4, KQueryTermTypes.space, ' '),
+            termType: KQueryTermTypes.space,
+            termValue: ' ',
           })
         })
       }
 
       enterExclusion = (ctx: ExclusionContext) => {
         const idx = ctx.start.start
-        const termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
+        let termValue = qsString.substring(ctx.start.start, ctx.start.stop + 1)
+        if (termValue === 'NOT') {
+          termValue = 'NOT '
+        }
         termsArray.push({
           idx,
           key: formatKey(idx, KQueryTermTypes.exclusion, termValue),
@@ -195,10 +225,25 @@ export default function useKQueryParser() {
           const termValue = qsString.substring(oE.start.start, oE.start.stop + 1)
           termsArray.push({
             idx,
-            key: formatKey(idx, KQueryTermTypes.or, termValue),
+            key: formatKey(idx, KQueryTermTypes.space, ' '),
+            termType: KQueryTermTypes.space,
+            termValue: ' ',
+          })
+
+          termsArray.push({
+            idx: idx + 1,
+            key: formatKey(idx + 1, KQueryTermTypes.or, termValue),
             termType: KQueryTermTypes.or,
             termValue,
           })
+
+          termsArray.push({
+            idx: idx + 3,
+            key: formatKey(idx + 4, KQueryTermTypes.space, ' '),
+            termType: KQueryTermTypes.space,
+            termValue: ' ',
+          })
+
         })
       }
     }
@@ -211,7 +256,6 @@ export default function useKQueryParser() {
     })
 
     console.log('termsArray:', [...termsArray])
-
     // only leave most inner clauses
     const clauseIdx = []
 
@@ -230,84 +274,55 @@ export default function useKQueryParser() {
     }
 
     clauseIdx.forEach(c => {
+      const clauseEndIdx = termsArray.findIndex((t: KQueryTerm) => (t.termType === KQueryTermTypes.clauseEnd && t.started === termsArray[c].idx))
+      console.log(clauseEndIdx)
+      termsArray.splice(clauseEndIdx, 1)
       termsArray.splice(c, 1)
     })
 
-    const parentIdx = []
-    const parentIdxFull = []
-    for (let j = 0; j < termsArray.length; j++) {
-
-      if (parentIdx.length) {
-        termsArray[j].parent = parentIdx[0]
+    while (1) {
+      let insertNeeded = false
+      // need space between clauseEnd and clause
+      for (let j = 0; j < termsArray.length - 1; j++) {
+        if (termsArray[j].termType === KQueryTermTypes.clauseEnd && termsArray[j + 1].termType === KQueryTermTypes.clause) {
+          insertNeeded = true
+          termsArray.splice(j + 1, 0, { idx: termsArray[j + 1].idx - 1, termType: KQueryTermTypes.space, key: formatKey(termsArray[j + 1].idx - 1, KQueryTermTypes.space, ' '), termValue: ' ' })
+        }
       }
-
-      if (termsArray[j].termType === KQueryTermTypes.clause || termsArray[j].termType === KQueryTermTypes.grouping) {
-        parentIdx.unshift(j)
-        parentIdxFull.unshift(j)
-        continue
-      }
-      if (termsArray[j].termType === KQueryTermTypes.clauseEnd || termsArray[j].termType === KQueryTermTypes.groupingEnd) {
-        termsArray[j].parent = -1
-        parentIdx.shift()
-        continue
+      if (insertNeeded === false) {
+        break
       }
     }
 
-    parentIdxFull.sort((a, b) => (b - a))
-
-    parentIdxFull.forEach((i: number) => {
-      for (let j = 0; j < termsArray.length; j++) {
-        if (termsArray[j].parent === i) {
-          if (!termsArray[i].children) {
-            termsArray[i].children = []
-          }
-          termsArray[i].children?.push(termsArray[j])
-          termsArray[j].parent = -1
-        }
+    // nove not outside of the clause
+    termsArray.sort((a, b) => {
+      if (a.idx === b.idx && b.termType === KQueryTermTypes.clause && a.termType === KQueryTermTypes.exclusion) {
+        return -1
       }
+      return a.idx - b.idx
     })
-    // delete all the ends
-    for (let j = termsArray.length - 1; j > 0; j--) {
-      if (termsArray[j].parent === -1) {
-        termsArray.splice(j, 1)
-      }
-    }
-    console.log('termsArray with parent assigned:', [...termsArray], clauseIdx)
+    const l = termsArray.length - 1
+    termsArray.push({ idx: termsArray[l].idx + 1, termType: KQueryTermTypes.space, key: formatKey(termsArray[l].idx + 1, KQueryTermTypes.space, ' '), termValue: ' ' })
 
-    const addSpaces = (tArray: any) => {
-      while (1) {
-        let spacesDone = true
-        for (let j = 0; j < tArray.length; j++) {
-          if (tArray[j].children) {
-            addSpaces(tArray[j].children)
-          }
-        }
-        for (let j = 0; j < tArray.length - 1; j++) {
-          if (tArray[j].termType === KQueryTermTypes.space || tArray[j + 1].termType === KQueryTermTypes.space) {
-            continue
-          }
-          if (tArray[j].termType === KQueryTermTypes.fieldName && tArray[j + 1].termType === KQueryTermTypes.fieldValue) {
-            continue
-          }
-
-          if (tArray[j + 1].termType !== KQueryTermTypes.space) {
-            tArray.splice(j + 1, 0, { idx: tArray[j + 1].idx - 1, termType: KQueryTermTypes.space })
-            spacesDone = false
-            break
-          }
-        }
-        if (spacesDone) {
-          break
-        }
-      }
-    }
-    addSpaces(termsArray)
-
-    // termsArray.push({ type: 'clause' })
     console.log('termsArray final:', [...termsArray])
     searchTerms.value = termsArray
     searchTermsString.value = qsString
     cursorPosition.value = cursorPos
+  }
+
+  const updateTerm = (newValue: string, key: string) => {
+    let newString = ''
+    let newCursorPosition = 0
+    searchTerms.value.forEach(t => {
+      if (t.key === key) {
+        newCursorPosition = t.idx + newValue.length
+        newString += newValue
+      } else {
+        newString += t.termValue || ''
+      }
+    })
+    console.log(`updateTerm final:>${newString}<`)
+    parse(newString, newCursorPosition)
   }
 
   return {
@@ -316,5 +331,6 @@ export default function useKQueryParser() {
     parserError,
     searchTerms,
     cursorPosition,
+    updateTerm,
   }
 }

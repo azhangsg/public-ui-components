@@ -1,23 +1,19 @@
 <template>
   <div
     ref="prettyInput"
-    class="search-terms-pretty"
-    contenteditable="true"
+    :class="`search-terms-pretty ${searchTermsString ? '' : ' empty'}`"
+    contenteditable="false"
     placeholder="Add search criteria..."
-    @click="onClick"
-    @keydown="onKeyDown"
-    @keyup="onKeyUp"
-    v-html="content"
-  />
-
-  <div
-    ref="shadowInput"
-    class="search-terms-pretty-shadow"
+    tabindex="-1"
   >
     <SearchTerm
       v-for="term in searchTerms"
       :key="term.key"
       :term="term"
+      @fZocus-next="onFocusNext"
+      @fZocus-prev="onFocusPrev"
+      @sZtart-search="onStartSearch"
+      @uZpdate-term="onUpdateTerm"
     />
   </div>
 </template>
@@ -26,7 +22,7 @@
 import composables from '../composables'
 import { onMounted, watch, ref, nextTick } from 'vue'
 import SearchTerm from './SearchTerm.vue'
-import { setCursorPosition, getCursorPosition } from '../utils'
+import { setCursorPosition } from '../utils'
 
 const props = defineProps({
   initialValue: {
@@ -39,39 +35,45 @@ const props = defineProps({
   },
 })
 
-const { searchTermsString, parse, parserError, searchTerms, cursorPosition } = composables.useKQueryParser()
+const { searchTermsString, parse, parserError, searchTerms, cursorPosition, updateTerm } = composables.useKQueryParser()
 
-const content = ref('')
 const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
 const prettyInput = ref<HTMLElement>()
-const shadowInput = ref<HTMLElement>()
 
-const onKeyDown = (e: KeyboardEvent) => {
-  console.log('keydown:', e)
-  if (e.code === 'Enter') {
-    emit('start-search')
-    e.stopPropagation()
-    e.preventDefault()
-    return false
+const onFocusNext = (dataKey: string) => {
+  const currentIdx = searchTerms.value.findIndex(t => t.key === dataKey)
+  console.log('onFocusNext:', dataKey, currentIdx)
+  if (currentIdx === -1 || currentIdx === searchTerms.value.length - 1) {
+    return
   }
+  (prettyInput.value?.querySelector(`[data-key="${searchTerms.value[currentIdx + 1].key}"]`) as HTMLElement).focus()
 }
 
-const onClick = (e: FocusEvent) => {
-  startParse(e)
+const onFocusPrev = (dataKey: string) => {
+  const currentIdx = searchTerms.value.findIndex(t => t.key === dataKey)
+  console.log('onFocusPrev:', dataKey, currentIdx)
+  if (currentIdx < 1 || currentIdx === searchTerms.value.length) {
+    return
+  }
+  const prevEl = (prettyInput.value?.querySelector(`[data-key="${searchTerms.value[currentIdx - 1].key}"]`) as HTMLElement)
+  console.log('prevEl:', prevEl)
+  if (!prevEl) {
+    console.log('focusing??')
+    return
+  }
+  setCursorPosition(prevEl, prevEl.innerText.length)
+  prevEl.focus()
 }
 
-const onKeyUp = (e: KeyboardEvent) => {
-  startParse(e)
+const onStartSearch = () => {
+  console.log('onStartSearch:')
+  emit('start-search')
 }
 
-const startParse = async (e: FocusEvent| KeyboardEvent) => {
-
-  const htmlEl = prettyInput.value as HTMLElement
-  await nextTick()
-  const cursorPosition = getCursorPosition(htmlEl)
-  console.log('startParse:', e, cursorPosition, htmlEl)
-  parse(htmlEl.innerText.replaceAll(String.fromCharCode(160), ' '), cursorPosition)
+const onUpdateTerm = (newValue: string, key: string) => {
+  console.log('onUpdateTerm:', newValue, key)
+  updateTerm(newValue, key)
 }
 
 watch(parserError, (newValue) => {
@@ -83,10 +85,8 @@ watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (ne
   console.log('fire changed based on result of parse')
   if (newValue.v !== oldValue.v) {
     await nextTick()
-    console.log(shadowInput.value?.innerHTML)
-    content.value = (shadowInput.value?.innerHTML || '') + '<span>&nbsp;</span>'
-    await nextTick()
-    setCursorPosition(prettyInput.value, newValue.p)
+    prettyInput.value?.focus()
+    // setCursorPosition(prettyInput.value, newValue.p)
   }
 
   emit('search-terms-changed', newValue.v, newValue.p)
@@ -94,7 +94,6 @@ watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (ne
 
 watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
   console.log('fire parse based on changed props ')
-  content.value = (shadowInput.value?.innerHTML || '') + '<span>&nbsp;</span>'
   parse(item.v, item.p, false)
 })
 
@@ -102,7 +101,7 @@ onMounted(async () => {
   console.log('onMOunted', props.initialValue, props.initialCursorPosition)
   parse(props.initialValue, props.initialCursorPosition, false)
   await nextTick()
-  setCursorPosition(prettyInput.value, props.initialCursorPosition)
+  // setCursorPosition(prettyInput.value, props.initialCursorPosition)
 })
 </script>
 
@@ -125,9 +124,12 @@ onMounted(async () => {
   .before-empty {
     width:4px;
   }
-}
-.search-terms-pretty-shadow {
-  display: none;
+  &.empty:not(:focus):before {
+    color: gray;
+    content: attr(placeholder);
+    font-size: 18px;
+    pointer-events: none;
+  }
 }
 
 </style>

@@ -100,20 +100,26 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-    .search-terms-plain {
-      align-items: center;
-      border: 0px;
-      display: inline-block;
-      font-size: 18px;
+.search-terms-plain {
+  align-items: center;
+  border: 0px;
+  display: inline-block;
+  font-size: 18px;
 
-      padding-left: 4px;
-      padding-right: 4px;
-      width:100%;
-      &:focus {
-        border-radius: 0px;
-        box-shadow: 0px;
-        outline: none;
-      }
-    }
+  padding-left: 4px;
+  padding-right: 4px;
+  width:100%;
+  &:focus {
+    border-radius: 0px;
+    box-shadow: 0px;
+    outline: none;
+  }
+  &:empty:not(:focus):before {
+    color: gray;
+    content: attr(placeholder);
+    font-size: 18px;
+    pointer-events: none;
+  }
+}
 
 </style>

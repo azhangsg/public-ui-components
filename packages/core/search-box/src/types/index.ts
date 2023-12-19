@@ -10,9 +10,8 @@ export type KQueryTerm = {
   idx: number
   key: string
   termType: KQueryTermTypes
-  termValue?: string
-  children?: KQueryTerm[]
-  parent?: number
+  termValue: string
+  started?: number
 }
 
 export type SearchSuggestion = {

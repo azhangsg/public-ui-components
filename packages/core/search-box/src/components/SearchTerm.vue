@@ -1,38 +1,20 @@
 <template>
-  <div
-    :class="`search-term ${searchTermClass}`"
-  >
-    <span
-      v-if="term.termType === KQueryTermTypes.grouping"
-      class="col grouping-start"
-    >(</span>
-    <span
-      v-if="term.termType === KQueryTermTypes.space"
-    >&nbsp;</span>
-
-    <span>{{ term.termValue }}</span>
-    <search-term
-      v-for="item in term.children"
-      :key="item.key"
-      :term="item"
-    />
-
-    <span
-      v-if="term.termType === KQueryTermTypes.grouping"
-      class="col grouping-end"
-    >)</span>
-  </div>
   <span
-    v-if="term.termType === KQueryTermTypes.fieldName"
-    class="col"
-  >:</span>
+    :class="`search-term ${term.termType}`"
+    contenteditable="true"
+    :data-key="term.key"
+    @focusout="onFocusOut"
+    @keydown="onKeyDown"
+    @keyup="onKeyUp"
+  >
+    {{ term.termValue }}
+  </span>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
-import { computed } from 'vue'
 import type { KQueryTerm } from './../types'
-import { KQueryTermTypes } from './../enums'
+import { getCursorPosition } from '../utils'
 
 const props = defineProps({
   term: {
@@ -41,86 +23,121 @@ const props = defineProps({
   },
 })
 
-const term = computed((): KQueryTerm => {
-  return props.term
-})
+const emit = defineEmits(['focus-next', 'focus-prev', 'start-search', 'update-term'])
 
-const searchTermClass = computed(() => {
-  if (term.value.termType !== KQueryTermTypes.clause || !term.value?.children) {
-    return term.value.termType
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.code === 'Enter') {
+    console.log('keydown:', e)
+    emit('start-search')
+    e.stopPropagation()
+    e.preventDefault()
+    return false
   }
-  // only clause that doesn't have any children cluases has a class
-  for (let i = 0; i < term.value?.children?.length; i++) {
-    if ([KQueryTermTypes.clause, KQueryTermTypes.grouping].includes(term.value?.children[i]?.termType)) {
-      // return ''
-    }
+
+  const targetEl = (e.target as HTMLElement)
+  const cursorPos = getCursorPosition(targetEl)
+  console.log('searchTerm keyDown:', e, targetEl.getAttribute('data-key'), cursorPos, targetEl.innerText.length)
+  if (e.code === 'ArrowRight' && cursorPos === targetEl.innerText.length) {
+    emit('focus-next', targetEl.getAttribute('data-key'))
   }
-  return term.value.termType
-})
+  if (e.code === 'ArrowLeft' && cursorPos === 0) {
+    emit('focus-prev', targetEl.getAttribute('data-key'))
+  }
+
+}
+
+const onKeyUp = (e: KeyboardEvent) => {
+  // const targetEl = (e.target as HTMLElement)
+  // const cursorPos = getCursorPosition(targetEl)
+  // console.log('searchTerm keyUp:', e, targetEl.getAttribute('data-key'), cursorPos, targetEl.innerText.length)
+}
+
+const onFocusOut = (e:FocusEvent) => {
+  const targetEl = (e.target as HTMLElement)
+
+  console.log('searchTerm focusOut:', e, `termValue:>${props.term.termValue}< innerText:>${targetEl.innerText}<, innerHtml:>${targetEl.innerHTML}<`)
+  if ((props.term.termValue || '') !== targetEl.innerHTML) {
+    emit('update-term', targetEl.innerHTML, targetEl.getAttribute('data-key'))
+  }
+}
+
 </script>
 
 <style lang="scss" scoped>
 .search-term {
+  display: inline-block;
+  &:after {
+    content: '';
     display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    width: 0px;
+  }
 
-    .col {
-      color: magenta;
-      padding: 0 2px;
-      &.grouping-start {
-        padding-right: 4px;
-      }
-      &.grouping-end {
-        padding-left: 4px;
-      }
-    }
+  &:focus {
+    border-radius: 0px;
+    box-shadow: 0px;
+    outline: none;
+  }
 
-    div {
-      display: inline-block;
-    }
-    &:focus {
-      border-radius: 0px;
-      box-shadow: 0px;
-      outline: none;
-    }
+  &.fieldValue {
+    background-color: blue;
+    color: white;
 
-    &.fieldValue {
-      //padding: 0 4px;
-    }
+  }
 
-    &.fieldName {
-      //padding: 0 4px;
-    }
+  &.fieldName {
+    background-color: blue;
+    color: white;
+  }
+  &.colon {
+    background-color: blue;
+    color: magenta;
+  }
 
-    &.or {
-      // background-color: white;
-      color: magenta;
-      // margin:4px;
-    }
+  &.or {
+    // background-color: white;
+    color: magenta;
+    // margin:4px;
+  }
 
-    &.and {
-      // background-color: white;
-      color: magenta;
-      // margin:4px;
-    }
+  &.and {
+    // background-color: white;
+    color: magenta;
+    // margin:4px;
+  }
 
-    &.exclusion {
-      background-color: blue;
-      color: magenta;
-    }
+  &.exclusion {
+    color: magenta;
+  }
 
-    &.grouping {
-      // background-color: lightgray;
-      // border: 1px solid gray;
-    }
-    &.clause {
-      background-color: blue;
-      border-radius: 6px;
-      color: white;
-      padding: 0 6px;
-    }
-    &.empty {
-      margin-left:4px;
-      min-width:4px;
-    }
+  &.grouping {
+    color: magenta;
+    padding-right: 2px;
+  }
+  &.grouping-end {
+    color: magenta;
+    padding-left: 2px;
+  }
+
+  &.clause {
+    background-color: blue;
+    border-bottom-left-radius: 6px;
+    border-top-left-radius: 6px;
+    color: white;
+    min-width: 6px;
+  }
+
+  &.clause-end {
+    background-color: blue;
+    border-bottom-right-radius: 6px;
+    border-top-right-radius: 6px;
+    color: white;
+    min-width: 6px;
+  }
+
+  &.space {
+    padding: 0 4px;
+  }
 }
 </style>

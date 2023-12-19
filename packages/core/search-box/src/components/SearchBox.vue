@@ -27,7 +27,6 @@
           @search-terms-error="searchTermsError"
           @start-search="startSearch"
         />
-        <!-- </KDropdoZwn> -->
         <button
           v-if="searchTermsString != ''"
           class="search-for-clear-btn"

@@ -29,6 +29,7 @@ const recentSearchesFetcher = async () => {
   return [
     'A',
     '-AA A',
+    '-AA AND NOT A',
     '(geo.country:"United Kingdom" OR geo.country:Iceland) AND geo.city:London',
     '@geo.country:("United Kingdom" OR Iceland) @geo.city:LOndon - this one doesn\'t work till TPS-1813 is resolved',
     'KAuth',
