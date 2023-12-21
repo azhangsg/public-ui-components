@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, readonly } from 'vue'
 import type { ErrorListener } from 'antlr4'
 import { ParseTreeWalker, CharStream, CommonTokenStream } from 'antlr4'
 
@@ -25,7 +25,6 @@ export default function useKQueryParser() {
 
   class KQueryErrorListener implements ErrorListener<any> {
     syntaxError(recognizer: any, offendingSymbol: number, line: number, charPositionInLine: number, msg: string) {
-      // @ts-ignore
       parserError.value = { message: `line ${line}:${charPositionInLine} ${msg}`, line, charPositionInLine }
     }
   }
@@ -41,7 +40,7 @@ export default function useKQueryParser() {
   const parse = async (queryStringOrig: string, cursorPos: number, debounce:boolean = true) => {
     const queryString = queryStringOrig.trim().replace('\n', '')
     console.log(`parse called: >${queryString}<`, cursorPos)
-    console.log(`   while old: >${searchTermsString.value}<`, cursorPosition.value)
+    console.log(`   while old: >${searchTermsString.value}<`, cursorPosition.value, searchTerms.value)
     clearTimeout(timeout)
     // no need debounce here
     if (queryString === '' || !debounce || debounces.value > 3) {
@@ -58,15 +57,16 @@ export default function useKQueryParser() {
   }
 
   const doParse = (qsString: string, cursorPos: number): Promise<void> => {
+    console.log(`in the doParse:>${qsString}<`, searchTerms.value)
 
     return new Promise((resolve) => {
 
       if (qsString.trim() === searchTermsString.value.trim()) {
         cursorPosition.value = cursorPos
+        console.log('there:', searchTerms.value)
         resolve()
         return
       }
-      console.log(`in the doParse:>${qsString}<`)
 
       const dtKey = new Date().getTime()
       const formatKey = (idx: number, termType: KQueryTermTypes, value?: string) => {
@@ -75,9 +75,10 @@ export default function useKQueryParser() {
 
       parserError.value = undefined
       if (qsString.trim() === '') {
+        searchTerms.value = [emptyTerm]
+        console.log('here:', searchTerms.value)
         searchTermsString.value = ''
         cursorPosition.value = cursorPos
-        searchTerms.value = [emptyTerm]
         resolve()
         return
       }
@@ -274,7 +275,31 @@ export default function useKQueryParser() {
         return a.idx - b.idx
       })
 
+      if (parserError.value) {
+        // @ts-ignore
+        const errIdx = termsArray.findIndex(t => t.idx >= parserError.value?.charPositionInLine - 1)
+        termsArray.splice(errIdx, termsArray.length - errIdx)
+      }
+      // while (1) {
+      //   let cleanupNeeded = false
+      //   if ([KQueryTermTypes.clause, KQueryTermTypes.space].includes(termsArray[termsArray.length - 1].termType)) {
+      //     termsArray.pop()
+      //     cleanupNeeded = true
+      //     continue
+      //   }
+      //   if (termsArray.length > 2 && termsArray[termsArray.length - 1].termType === KQueryTermTypes.clauseEnd && [KQueryTermTypes.and, KQueryTermTypes.or].includes(termsArray[termsArray.length - 2].termType)) {
+      //     termsArray.pop()
+      //     cleanupNeeded = true
+      //     continue
+      //   }
+      //   if (!cleanupNeeded) {
+      //     break
+      //   }
+
+      // }
+
       console.log('termsArray:', [...termsArray])
+
       // only leave most inner clauses
       const clauseIdx = []
 
@@ -386,10 +411,10 @@ export default function useKQueryParser() {
 
   return {
     parse,
-    searchTermsString,
-    parserError,
-    searchTerms,
-    cursorPosition,
+    searchTermsString: readonly(searchTermsString),
+    parserError: readonly(parserError),
+    searchTerms: readonly(searchTerms),
+    cursorPosition: readonly(cursorPosition),
     updateTerm,
     getActiveTerm,
   }

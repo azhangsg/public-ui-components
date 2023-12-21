@@ -3,7 +3,7 @@ import type { KQueryTermTypes, SuggestionTypes } from '../enums'
 export type KQueryParserError = {
   message: string
   line: number
-  charPositionLine: number
+  charPositionInLine: number
 }
 
 export type KQueryTerm = {

@@ -7,6 +7,7 @@
     @focusout="onFocusOut"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
+    @paste="onPaste"
   >
     {{ term.termValue }}
   </span>
@@ -15,7 +16,7 @@
 <script setup lang="ts">
 import type { PropType } from 'vue'
 import type { KQueryTerm } from './../types'
-import { getCursorPosition } from '../utils'
+import { getCursorPosition, insertText } from '../utils'
 import { KQueryTermTypes } from '../enums'
 
 const props = defineProps({
@@ -53,14 +54,19 @@ const onKeyDown = (e: KeyboardEvent) => {
     e.preventDefault()
     emit('focus-prev', targetEl.getAttribute('data-key'))
   }
+
   if (e.code === 'Backspace') {
+    if (props.isEmpty && targetEl.innerText === '') {
+      e.stopPropagation()
+      e.preventDefault()
+      return
+    }
     if (cursorPos === 0 && (targetEl.innerText !== '' || props.term.termType === KQueryTermTypes.space)) {
       e.stopPropagation()
       e.preventDefault()
       emit('focus-prev', targetEl.getAttribute('data-key'))
       return
     }
-    console.log('?????', targetEl.innerText.length)
     if (targetEl.innerText.length === 0) {
       e.stopPropagation()
       e.preventDefault()
@@ -70,8 +76,20 @@ const onKeyDown = (e: KeyboardEvent) => {
   }
 }
 
+const onPaste = (e: ClipboardEvent) => {
+  console.log('onPaste:', e)
+  insertText(e)
+}
+
 const onKeyUp = (e: KeyboardEvent) => {
-  // const targetEl = (e.target as HTMLElement)
+  const targetEl = (e.target as HTMLElement)
+  if (props.isEmpty) {
+    if (targetEl.innerText.trim() !== '') {
+      targetEl.classList.remove('empty')
+    } else {
+      targetEl.classList.add('empty')
+    }
+  }
   // const cursorPos = getCursorPosition(targetEl)
   // console.log('searchTerm keyUp:', e, targetEl.getAttribute('data-key'), cursorPos, targetEl.innerText.length)
 }

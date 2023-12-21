@@ -60,7 +60,7 @@ const resultsFetcher = async (q) => {
   if (!patKey.value) {
     return { error: 'no pat key' }
   }
-  const resp = await axios.get(`${window.location.hostname === 'localhost' ? '/kong-api' : 'whttps://us.api.konghq.tech'}/v0/search`, {
+  const resp = await axios.get(`${window.location.hostname === 'localhost' ? '/kong-api' : 'https://us.api.konghq.tech'}/v0/search`, {
     params: {
       q: q.trim(),
     },

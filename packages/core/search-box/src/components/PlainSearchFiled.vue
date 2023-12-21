@@ -7,11 +7,12 @@
     @click="onClick"
     @keydown.stop="onKeyDown"
     @keyup="onKeyUp"
+    @paste="onPaste"
   />
 </template>
 
 <script setup lang="ts">
-import { getCursorPosition, setCursorPosition } from '../utils'
+import { getCursorPosition, setCursorPosition, insertText } from '../utils'
 import composables from '../composables'
 import { ref, nextTick, onMounted, watch } from 'vue'
 
@@ -46,12 +47,17 @@ const onClick = (e: FocusEvent) => {
   startParse(e)
 }
 
-const onKeyUp = (e: any) => {
+const onKeyUp = (e: KeyboardEvent) => {
   // if (e.code === 'Enter') {
   //   emit('start-search')
   //   return
   // }
   startParse(e)
+}
+
+const onPaste = (e: ClipboardEvent) => {
+  console.log('onPaste:', e)
+  insertText(e)
 }
 
 const startParse = async (e: FocusEvent | KeyboardEvent) => {
