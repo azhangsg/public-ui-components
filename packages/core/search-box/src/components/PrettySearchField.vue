@@ -1,18 +1,19 @@
 <template>
   <div
     ref="prettyInput"
-    :class="`search-terms-pretty ${searchTermsString ? '' : ' empty'}`"
+    class="search-terms-pretty"
     contenteditable="false"
-    placeholder="Add search criteria..."
+    @click="onClick"
   >
     <SearchTerm
       v-for="term in searchTerms"
       :key="term.key"
+      :is-empty="searchTerms.length === 1 && searchTerms[0].termType === KQueryTermTypes.space"
       :term="term"
       @focus-next="onFocusNext"
       @focus-prev="onFocusPrev"
       @sZtart-search="onStartSearch"
-      @uZpdate-term="onUpdateTerm"
+      @update-term="onUpdateTerm"
     />
   </div>
 </template>
@@ -35,12 +36,21 @@ const props = defineProps({
   },
 })
 
-const { searchTermsString, parse, parserError, searchTerms, cursorPosition, updateTerm } = composables.useKQueryParser()
+const { searchTermsString, parse, parserError, searchTerms, cursorPosition, updateTerm, getActiveTerm } = composables.useKQueryParser()
 
 const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
 const prettyInput = ref<HTMLElement>()
 
+const setCursorForActiveTerm = (termKey: string, cursorPos: number = -1) => {
+  const activeEl = prettyInput.value?.querySelector(`[data-key="${termKey}"]`) as HTMLElement
+  console.log('activeEl:', activeEl)
+  if (!activeEl) {
+    return
+  }
+  setCursorPosition(activeEl, cursorPos === -1 ? activeEl.innerText.length : cursorPos)
+
+}
 const onFocusNext = (dataKey: string) => {
   const currentIdx = searchTerms.value.findIndex(t => t.key === dataKey)
   console.log('onFocusNext:', dataKey, currentIdx)
@@ -49,17 +59,12 @@ const onFocusNext = (dataKey: string) => {
   }
   let nextEditableKey = ''
   for (let j = currentIdx + 1; j < searchTerms.value.length; j++) {
-    if (![KQueryTermTypes.clause, KQueryTermTypes.clauseEnd].includes(searchTerms.value[j].termType)) {
+    if (searchTerms.value[j].isEditable && searchTerms.value[j].termValue !== '') {
       nextEditableKey = searchTerms.value[j].key
       break
     }
   }
-  const nextEl = prettyInput.value?.querySelector(`[data-key="${nextEditableKey}"]`) as HTMLElement
-  console.log('nextEl:', nextEl)
-  if (!nextEl) {
-
-  }
-  setCursorPosition(nextEl, 0)
+  setCursorForActiveTerm(nextEditableKey, 0)
 }
 
 const onFocusPrev = (dataKey: string) => {
@@ -71,20 +76,19 @@ const onFocusPrev = (dataKey: string) => {
 
   let prevEditableKey = ''
   for (let j = currentIdx - 1; j >= 0; j--) {
-    if (![KQueryTermTypes.clause, KQueryTermTypes.clauseEnd].includes(searchTerms.value[j].termType)) {
+    if (searchTerms.value[j].isEditable && searchTerms.value[j].termValue !== '') {
       prevEditableKey = searchTerms.value[j].key
       break
     }
   }
-  const prevEl = prettyInput.value?.querySelector(`[data-key="${prevEditableKey}"]`) as HTMLElement
+  setCursorForActiveTerm(prevEditableKey, -1)
+}
 
-  console.log('prevEl:', prevEl)
-  if (!prevEl) {
-    console.log('focusing??')
-    return
+const onClick = (e: MouseEvent) => {
+  console.log('onClick:', e)
+  if ((e.target as HTMLElement).className === 'search-terms-pretty') {
+    setCursorForActiveTerm(searchTerms.value[searchTerms.value.length - 1].key, 0)
   }
-  setCursorPosition(prevEl, prevEl.innerText.length)
-  prevEl.focus()
 }
 
 const onStartSearch = () => {
@@ -92,9 +96,9 @@ const onStartSearch = () => {
   emit('start-search')
 }
 
-const onUpdateTerm = (newValue: string, key: string) => {
+const onUpdateTerm = async (newValue: string, key: string) => {
   console.log('onUpdateTerm:', newValue, key)
-  updateTerm(newValue, key)
+  await updateTerm(newValue, key)
 }
 
 watch(parserError, (newValue) => {
@@ -103,11 +107,14 @@ watch(parserError, (newValue) => {
 })
 
 watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (newValue, oldValue) => {
-  console.log('fire changed based on result of parse')
+  console.log('fire changed based on result of parse:', newValue)
   if (newValue.v !== oldValue.v) {
     await nextTick()
-    prettyInput.value?.focus()
-    // setCursorPosition(prettyInput.value, newValue.p)
+    const activeTerm = getActiveTerm(cursorPosition.value)
+    console.log('activeTerm:', activeTerm)
+    if (activeTerm.activeKey) {
+      setCursorForActiveTerm(activeTerm.activeKey, activeTerm.cursorPosInTerm)
+    }
   }
 
   emit('search-terms-changed', newValue.v, newValue.p)
@@ -115,7 +122,7 @@ watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (ne
 
 watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
   console.log('fire parse based on changed props ')
-  parse(item.v, item.p, false)
+  await parse(item.v, item.p, false)
 })
 
 onMounted(async () => {
@@ -144,12 +151,6 @@ onMounted(async () => {
   }
   .before-empty {
     width:4px;
-  }
-  &.empty:not(:focus):before {
-    color: gray;
-    content: attr(placeholder);
-    font-size: 18px;
-    pointer-events: none;
   }
 }
 

@@ -54,7 +54,7 @@ const onKeyUp = (e: any) => {
   startParse(e)
 }
 
-const startParse = (e: FocusEvent | KeyboardEvent) => {
+const startParse = async (e: FocusEvent | KeyboardEvent) => {
   const htmlEl = e.target as HTMLElement
   const cursorPosition = getCursorPosition(htmlEl)
   console.log('startParse:', e, cursorPosition, htmlEl)

@@ -1,6 +1,8 @@
 <template>
   <div class="suggestion-panel">
     {{ props.searchTermsString }}
+    <br>
+    {{ suggestionPattern }}
     <div v-if="fieldNamesFiltered.length">
       <h4>Feld Names</h4>
       <ul>
@@ -56,7 +58,7 @@ const recentSearches = ref<string[]>([])
 const fieldNames = ref<string[]>([])
 
 const suggestionPattern = computed(() => {
-  const strArr = props.searchTermsString.substring(0, props.cursorPosition).split(/\s:\)\(/)
+  const strArr = props.searchTermsString.substring(0, props.cursorPosition).split(/[\s:)(]/)
   return strArr[strArr.length - 1]
 })
 

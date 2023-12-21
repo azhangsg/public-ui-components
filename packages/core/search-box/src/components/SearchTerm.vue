@@ -1,8 +1,9 @@
 <template>
   <span
-    :class="`search-term ${term.termType}`"
-    :contenteditable="![KQueryTermTypes.clause, KQueryTermTypes.clauseEnd].includes(term.termType)"
+    :class="`search-term ${term.termType} ${isEmpty ? 'empty': ''}`"
+    :contenteditable="term.isEditable"
     :data-key="term.key"
+    :placeholder="isEmpty ? 'Add search criteria...' : ''"
     @focusout="onFocusOut"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
@@ -21,6 +22,10 @@ const props = defineProps({
   term: {
     type: Object as PropType<KQueryTerm>,
     required: true,
+  },
+  isEmpty: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -48,6 +53,21 @@ const onKeyDown = (e: KeyboardEvent) => {
     e.preventDefault()
     emit('focus-prev', targetEl.getAttribute('data-key'))
   }
+  if (e.code === 'Backspace') {
+    if (cursorPos === 0 && (targetEl.innerText !== '' || props.term.termType === KQueryTermTypes.space)) {
+      e.stopPropagation()
+      e.preventDefault()
+      emit('focus-prev', targetEl.getAttribute('data-key'))
+      return
+    }
+    console.log('?????', targetEl.innerText.length)
+    if (targetEl.innerText.length === 0) {
+      e.stopPropagation()
+      e.preventDefault()
+      emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'))
+    }
+
+  }
 }
 
 const onKeyUp = (e: KeyboardEvent) => {
@@ -57,13 +77,12 @@ const onKeyUp = (e: KeyboardEvent) => {
 }
 
 const onFocusOut = (e:FocusEvent) => {
-  return
-  const targetEl = (e.target as HTMLElement)
+//  const targetEl = (e.target as HTMLElement)
 
-  console.log('searchTerm focusOut:', e, `termValue:>${props.term.termValue}< innerText:>${targetEl.innerText}<, innerHtml:>${targetEl.innerHTML}<`)
-  if ((props.term.termValue || '') !== targetEl.innerHTML) {
-    emit('update-term', targetEl.innerHTML, targetEl.getAttribute('data-key'))
-  }
+  // console.log('searchTerm focusOut:', e, `termValue:>${props.term.termValue}< innerText:>${targetEl.innerText}<, innerHtml:>${targetEl.innerHTML}<`)
+  // if ((props.term.termValue || '') !== targetEl.innerHTML) {
+  //   emit('update-term', targetEl.innerText.trim(), targetEl.getAttribute('data-key'))
+  // }
 }
 
 </script>
@@ -144,5 +163,12 @@ const onFocusOut = (e:FocusEvent) => {
   &.space {
     padding: 0 4px;
   }
+  &.empty:not(:focus):before {
+    color: gray;
+    content: attr(placeholder);
+    font-size: 18px;
+    pointer-events: none;
+  }
+
 }
 </style>

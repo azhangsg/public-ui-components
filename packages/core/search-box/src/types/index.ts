@@ -12,6 +12,7 @@ export type KQueryTerm = {
   termType: KQueryTermTypes
   termValue: string
   started?: number
+  isEditable: boolean
 }
 
 export type SearchSuggestion = {
