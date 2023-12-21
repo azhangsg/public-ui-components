@@ -11,7 +11,8 @@
   "exports": {
     ".": {
       "import": "./dist/search-box.es.js",
-      "require": "./dist/search-box.umd.js"
+      "require": "./dist/search-box.umd.js",
+      "types": "./dist/types/index.d.ts"
     },
     "./package.json": "./package.json",
     "./dist/*": "./dist/*"
