@@ -1,8 +1,11 @@
 <template>
   <div class="suggestion-panel">
-    terms: {{ props.searchTermsString }}
+    string: {{ props.searchTermsString }}
     <br>
-    pattern: {{ suggestionPattern }}
+    fieldNameSuggestion: {{ fieldNameSuggestion }}
+    <br>
+    fieldValueSuggestion: {{ fieldValueSuggestion }}
+
     <div v-if="fieldNamesFiltered.length">
       <h4>Feld Names</h4>
       <ul>
@@ -57,24 +60,54 @@ const props = defineProps({
 const recentSearches = ref<string[]>([])
 const fieldNames = ref<string[]>([])
 
-const suggestionPattern = computed(() => {
-  const strArr = props.searchTermsString.substring(0, props.cursorPosition).split(/[\s:)(]/)
+const fieldNameSuggestion = computed(() => {
+  const strArr = props.searchTermsString.substring(0, props.cursorPosition).split(/[\s)(]/)
   const last = strArr[strArr.length - 1]
-  console.log('last:', last, strArr, props.searchTermsString.substring(0, props.cursorPosition))
-  return last === ':' ? strArr[strArr.length - 2] + last : last
+  return (last.includes(':') ? last.split(':')[0] : last).trim()
+})
+
+const fieldValueSuggestion = computed(() => {
+  const strArr = props.searchTermsString.substring(0, props.cursorPosition).split(/[\s)(]/)
+  const last = strArr[strArr.length - 1]
+  return (last.includes(':') ? last.substring(last.indexOf(':') + 1, last.length) : last).trim()
 })
 
 const fieldNamesFiltered = computed(() => {
-  return fieldNames.value.filter(fieldName => (fieldName.includes(props.searchTermsString) || fieldName.includes(suggestionPattern.value)))
+  return fieldNames.value.filter(fieldName => {
+    return fieldName.includes(props.searchTermsString) ||
+      (fieldNameSuggestion.value && fieldName.includes(fieldNameSuggestion.value)) ||
+      (fieldValueSuggestion.value && fieldName.includes(fieldValueSuggestion.value))
+  })
 })
 
 const recentSearchesFiltered = computed(() => {
-  return recentSearches.value.filter(recentSearch => (recentSearch.includes(props.searchTermsString) || recentSearch.includes(suggestionPattern.value)))
+  return recentSearches.value.filter(recentSearch => {
+    return recentSearch.includes(props.searchTermsString) ||
+    (fieldNameSuggestion.value && recentSearch.includes(fieldNameSuggestion.value)) ||
+    (fieldValueSuggestion.value && recentSearch.includes(fieldValueSuggestion.value))
+  })
 })
 
 const itemHtml = (item: string) => {
-  return item.replace(suggestionPattern.value, `<span class='suggestion'>${suggestionPattern.value}</span>`)
+
+  if (fieldValueSuggestion.value) {
+    item = item.replaceAll(fieldValueSuggestion.value, `<span class='suggestion'>${fieldValueSuggestion.value}</span>`)
+  }
+
+  if (fieldNameSuggestion.value) {
+    const itemArr = item.split(/<span class='suggestion'>/)
+    for (let j = 0; j < itemArr.length; j++) {
+      const spArr = itemArr[j].split('</span>')
+      for (let i = 0; i < spArr.length; i++) {
+        spArr[i] = spArr[i].replaceAll(fieldNameSuggestion.value, `<span class='suggestion'>${fieldNameSuggestion.value}</span>`)
+      }
+      itemArr[j] = spArr.join('</span>')
+    }
+    item = itemArr.join('<span class=\'suggestion\'>')
+  }
+  return item
 }
+
 const emit = defineEmits(['suggestion-selected'])
 
 const setSuggestion = (suggestionType: SuggestionTypes, suggestionString: string) => {
@@ -83,7 +116,6 @@ const setSuggestion = (suggestionType: SuggestionTypes, suggestionString: string
     emit('suggestion-selected', suggestionString, suggestionString.length + 1)
     return
   }
-
   if (suggestionType === SuggestionTypes.fieldName) {
     // get the last field
     let finalString = props.searchTermsString

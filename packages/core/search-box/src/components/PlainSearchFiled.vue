@@ -48,10 +48,6 @@ const onClick = (e: FocusEvent) => {
 }
 
 const onKeyUp = (e: KeyboardEvent) => {
-  // if (e.code === 'Enter') {
-  //   emit('start-search')
-  //   return
-  // }
   startParse(e)
 }
 

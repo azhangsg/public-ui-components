@@ -11,7 +11,7 @@
 
         <PrettySearchFiled
           v-if="searchEntryType == SearchEntryTypes.pretty"
-          :key="currentKey.toString()"
+          :key="`${currentKey.toString()}-pretty`"
           :initial-cursor-position="initialCursorPosition"
           :initial-value="initialSearchTermsString"
           @search-terms-changed="searchTermsChanged"
@@ -20,7 +20,7 @@
         />
         <PlainSearchFiled
           v-if="searchEntryType == SearchEntryTypes.plain"
-          :key="currentKey.toString()"
+          :key="`${currentKey.toString()}-plain`"
           :initial-cursor-position="initialCursorPosition"
           :initial-value="initialSearchTermsString"
           @search-terms-changed="searchTermsChanged"
@@ -62,12 +62,14 @@
     >
       <template #tab1>
         <ResultsList
+          :key="`${currentKey.toString()}-results`"
           :results="searchResults"
           :search-terms-string="searchTermsString"
         />
       </template>
       <template #tab2>
         <SuggestionsList
+          :key="`${currentKey.toString()}-suggestions`"
           :cursor-position="cursorPosition"
           :fetch-field-names="props.fetchFieldNames"
           :fetch-recent-searches="props.fetchRecentSearches"
@@ -150,6 +152,7 @@ const searchTermsError = (receivedError: KQueryParserError) => {
 const resetSearchField = (newSearchTermsString: string, newCursorPosition: number) => {
 
   let resetKey = false
+  console.log('resetSearchField:', newSearchTermsString, initialSearchTermsString.value, newCursorPosition, initialCursorPosition.value)
   if (newSearchTermsString === initialSearchTermsString.value || newCursorPosition === initialCursorPosition.value) {
     resetKey = true
   }
@@ -173,6 +176,8 @@ const changeSearchEntryType = async () => {
 
 const clearSearchTerms = () => {
   console.log('clearSearchTerms', initialSearchTermsString.value)
+  searchTermsString.value = ''
+  cursorPosition.value = 0
   resetSearchField('', 0)
 }
 

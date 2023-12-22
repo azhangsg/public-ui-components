@@ -14,6 +14,7 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
+import { ref } from 'vue'
 import type { KQueryTerm } from './../types'
 import { getCursorPosition, insertText } from '../utils'
 import { UpdateTermActions, KQueryTermTypes } from '../enums'
@@ -30,6 +31,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['focus-next', 'focus-prev', 'start-search', 'update-term'])
+
+const afterKeyUp = ref<string>(props.term.termValue)
 
 const onKeyDown = (e: KeyboardEvent) => {
   const targetEl = (e.target as HTMLElement)
@@ -82,11 +85,16 @@ const onKeyUp = (e: KeyboardEvent) => {
     }
   }
 
-  if (['Space', 'Semicolon'].includes(e.code)) {
+  if (['Space', 'Semicolon', 'ArrowRight'].includes(e.code)) {
     e.stopPropagation()
     e.preventDefault()
     emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
   }
+  if (afterKeyUp.value !== targetEl.innerText) {
+    afterKeyUp.value = targetEl.innerText
+    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
+  }
+
 }
 
 </script>
