@@ -25,3 +25,9 @@ export enum SuggestionTypes {
   fieldName = 'fieldName',
   recent = 'recent'
 }
+
+export enum UpdateTermActions {
+  focusNext='focusNext',
+  focusPrev='focusPrev',
+  startSearch='startSearch',
+}

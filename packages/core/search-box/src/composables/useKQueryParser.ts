@@ -4,7 +4,7 @@ import { ParseTreeWalker, CharStream, CommonTokenStream } from 'antlr4'
 
 import { KQueryParser, KQueryLexer, KQueryParserListener } from '@kong/kquery-parser'
 import type { KQueryParserError, KQueryTerm } from '../types'
-import { KQueryTermTypes } from '../enums'
+import { UpdateTermActions, KQueryTermTypes } from '../enums'
 
 import type {
   UnionContext,
@@ -63,7 +63,6 @@ export default function useKQueryParser() {
 
       if (qsString.trim() === searchTermsString.value.trim()) {
         cursorPosition.value = cursorPos
-        console.log('there:', searchTerms.value)
         resolve()
         return
       }
@@ -76,7 +75,6 @@ export default function useKQueryParser() {
       parserError.value = undefined
       if (qsString.trim() === '') {
         searchTerms.value = [emptyTerm]
-        console.log('here:', searchTerms.value)
         searchTermsString.value = ''
         cursorPosition.value = cursorPos
         resolve()
@@ -277,27 +275,25 @@ export default function useKQueryParser() {
 
       if (parserError.value) {
         // @ts-ignore
-        const errIdx = termsArray.findIndex(t => t.idx >= parserError.value?.charPositionInLine - 1)
+        const errIdx = termsArray.findIndex(t => t.idx >= parserError.value?.charPositionInLine)
         termsArray.splice(errIdx, termsArray.length - errIdx)
       }
-      // while (1) {
-      //   let cleanupNeeded = false
-      //   if ([KQueryTermTypes.clause, KQueryTermTypes.space].includes(termsArray[termsArray.length - 1].termType)) {
-      //     termsArray.pop()
-      //     cleanupNeeded = true
-      //     continue
-      //   }
-      //   if (termsArray.length > 2 && termsArray[termsArray.length - 1].termType === KQueryTermTypes.clauseEnd && [KQueryTermTypes.and, KQueryTermTypes.or].includes(termsArray[termsArray.length - 2].termType)) {
-      //     termsArray.pop()
-      //     cleanupNeeded = true
-      //     continue
-      //   }
-      //   if (!cleanupNeeded) {
-      //     break
-      //   }
-
-      // }
-
+      while (1) {
+        let cleanupNeeded = false
+        if ([KQueryTermTypes.clause, KQueryTermTypes.space].includes(termsArray[termsArray.length - 1].termType)) {
+          termsArray.pop()
+          cleanupNeeded = true
+          continue
+        }
+        if (termsArray.length > 2 && termsArray[termsArray.length - 1].termType === KQueryTermTypes.clauseEnd && [KQueryTermTypes.and, KQueryTermTypes.or].includes(termsArray[termsArray.length - 2].termType)) {
+          termsArray.pop()
+          cleanupNeeded = true
+          continue
+        }
+        if (!cleanupNeeded) {
+          break
+        }
+      }
       console.log('termsArray:', [...termsArray])
 
       // only leave most inner clauses
@@ -362,34 +358,56 @@ export default function useKQueryParser() {
     })
   }
 
-  const updateTerm = async (newValueReceived: string, key: string) => {
+  const updateTerm = async (newValueReceived: string, termKey: string, postAction: UpdateTermActions) => {
+    console.log('updateTerm:', { newValueReceived, termKey, postAction })
     let newString = ''
-    let newCursorPosition = 0
     let newValue = newValueReceived
-    if (newValue.trim() === '') {
-      const idx = searchTerms.value.findIndex(t => t.key === key)
-      if (idx !== -1) {
-        searchTerms.value.splice(idx, 1)
-      }
-    }
-    searchTerms.value.forEach(t => {
-      if (t.key === key) {
+    let newCursorValue = 0
+    let currentIdx = 0
+    for (let j = 0; j < searchTerms.value.length; j++) {
+      const t = searchTerms.value[j]
+
+      if (t.key === termKey) {
         if (t.termType === KQueryTermTypes.space) {
-          newValue = (' ' + newValue + ' ')
+          if (j > 0) {
+            newValue = (' ' + newValue)
+          }
+          if (j < searchTerms.value.length - 1) {
+            newValue = (newValue + ' ')
+          }
         }
         console.log(`updateTerm:>${newValue}<`, t)
-        newCursorPosition = t.idx + newValue.length
         newString += newValue
+        currentIdx = t.idx
       } else {
         newString += t.termValue || ''
       }
-    })
-    if (newCursorPosition === 0) {
-      newCursorPosition = newString.length
     }
-    console.log(`updateTerm final:>${newString}<`, newCursorPosition)
-    await parse(newString, newCursorPosition)
+    if (postAction === UpdateTermActions.focusPrev) {
+      const prevKey = getPrevEditableKey(termKey)
+      if (prevKey !== null) {
+        const prevTerm = searchTerms.value.find(t => t.key === prevKey)
+        console.log('prevTerm:', prevTerm)
+        if (prevTerm) {
+          newCursorValue = prevTerm.idx + prevTerm.termValue.length
+        }
+      }
+    }
+    if (postAction === UpdateTermActions.focusNext) {
+      const nextKey = getNextEditableKey(termKey)
+      if (nextKey !== null) {
+        const nextTerm = searchTerms.value.find(t => t.key === nextKey)
+        console.log('nextTerm:', nextTerm)
+        if (nextTerm) {
+          newCursorValue = nextTerm.idx + nextTerm.termValue.length
+        }
+      } else {
+        newCursorValue = currentIdx + newValue.length
+      }
+    }
 
+    console.log(`updateTerm final:>${newString}<`, newCursorValue)
+    await parse(newString, newCursorValue)
   }
 
   const getActiveTerm = (cursorPos: number) => {
@@ -398,15 +416,42 @@ export default function useKQueryParser() {
 
     for (let j = searchTerms.value.length - 1; j >= 0; j--) {
       const t = searchTerms.value[j]
-      if (!t.isEditable || t.idx > cursorPos) {
+      if (!t.isEditable || t.idx >= cursorPos) {
         continue
       }
       activeKey = t.key
       cursorPosInTerm = cursorPos - t.idx
       break
     }
-
+    console.log('getActiveTerm for: ', cursorPos, { activeKey, cursorPosInTerm })
     return { activeKey, cursorPosInTerm }
+  }
+
+  const getNextEditableKey = (termKey: string): string|null => {
+    const currentIdx = searchTerms.value.findIndex(t => t.key === termKey)
+    if (currentIdx === -1 || currentIdx === searchTerms.value.length - 1) {
+      return null
+    }
+    for (let j = currentIdx + 1; j < searchTerms.value.length; j++) {
+      if (searchTerms.value[j].isEditable && searchTerms.value[j].termValue !== '') {
+        return searchTerms.value[j].key
+      }
+    }
+    return null
+  }
+
+  const getPrevEditableKey = (termKey: string): string | null => {
+    const currentIdx = searchTerms.value.findIndex(t => t.key === termKey)
+    if (currentIdx < 1 || currentIdx === searchTerms.value.length) {
+      return null
+    }
+
+    for (let j = currentIdx - 1; j >= 0; j--) {
+      if (searchTerms.value[j].isEditable && searchTerms.value[j].termValue !== '') {
+        return searchTerms.value[j].key
+      }
+    }
+    return null
   }
 
   return {
@@ -417,5 +462,7 @@ export default function useKQueryParser() {
     cursorPosition: readonly(cursorPosition),
     updateTerm,
     getActiveTerm,
+    getNextEditableKey,
+    getPrevEditableKey,
   }
 }

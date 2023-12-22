@@ -4,7 +4,6 @@
     :contenteditable="term.isEditable"
     :data-key="term.key"
     :placeholder="isEmpty ? 'Add search criteria...' : ''"
-    @focusout="onFocusOut"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
     @paste="onPaste"
@@ -17,7 +16,7 @@
 import type { PropType } from 'vue'
 import type { KQueryTerm } from './../types'
 import { getCursorPosition, insertText } from '../utils'
-import { KQueryTermTypes } from '../enums'
+import { UpdateTermActions, KQueryTermTypes } from '../enums'
 
 const props = defineProps({
   term: {
@@ -33,55 +32,47 @@ const props = defineProps({
 const emit = defineEmits(['focus-next', 'focus-prev', 'start-search', 'update-term'])
 
 const onKeyDown = (e: KeyboardEvent) => {
+  const targetEl = (e.target as HTMLElement)
   if (e.code === 'Enter') {
     console.log('keydown:', e)
-    emit('start-search')
+    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.startSearch)
     e.stopPropagation()
     e.preventDefault()
     return false
   }
 
-  const targetEl = (e.target as HTMLElement)
   const cursorPos = getCursorPosition(targetEl)
-  console.log('searchTerm keyDown:', e, targetEl.getAttribute('data-key'), cursorPos, targetEl.innerText.length)
+  console.log('searchTerm keyDown:', e, targetEl.getAttribute('data-key'), `>${targetEl.innerText}<`, cursorPos, targetEl.innerText.length)
   if (e.code === 'ArrowRight' && cursorPos === targetEl.innerText.length) {
     e.stopPropagation()
     e.preventDefault()
     emit('focus-next', targetEl.getAttribute('data-key'))
   }
-  if (e.code === 'ArrowLeft' && cursorPos === 0) {
+  if (e.code === 'ArrowLeft' && (cursorPos === 0 || (cursorPos === 1 && props.term.termType === KQueryTermTypes.space))) {
     e.stopPropagation()
     e.preventDefault()
     emit('focus-prev', targetEl.getAttribute('data-key'))
   }
 
-  if (e.code === 'Backspace') {
-    if (props.isEmpty && targetEl.innerText === '') {
-      e.stopPropagation()
-      e.preventDefault()
-      return
-    }
-    if (cursorPos === 0 && (targetEl.innerText !== '' || props.term.termType === KQueryTermTypes.space)) {
-      e.stopPropagation()
-      e.preventDefault()
-      emit('focus-prev', targetEl.getAttribute('data-key'))
-      return
-    }
-    if (targetEl.innerText.length === 0) {
-      e.stopPropagation()
-      e.preventDefault()
-      emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'))
-    }
+  if (e.code === 'Backspace' && (cursorPos === 0 || (cursorPos === 1 && props.term.termType === KQueryTermTypes.space))) {
+    e.stopPropagation()
+    e.preventDefault()
 
+    console.log('emitting update-term')
+    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusPrev)
   }
 }
 
 const onPaste = (e: ClipboardEvent) => {
   console.log('onPaste:', e)
   insertText(e)
+  const targetEl = (e.target as HTMLElement)
+
+  emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
 }
 
 const onKeyUp = (e: KeyboardEvent) => {
+  console.log('onKeyUp:', e)
   const targetEl = (e.target as HTMLElement)
   if (props.isEmpty) {
     if (targetEl.innerText.trim() !== '') {
@@ -90,17 +81,12 @@ const onKeyUp = (e: KeyboardEvent) => {
       targetEl.classList.add('empty')
     }
   }
-  // const cursorPos = getCursorPosition(targetEl)
-  // console.log('searchTerm keyUp:', e, targetEl.getAttribute('data-key'), cursorPos, targetEl.innerText.length)
-}
 
-const onFocusOut = (e:FocusEvent) => {
-//  const targetEl = (e.target as HTMLElement)
-
-  // console.log('searchTerm focusOut:', e, `termValue:>${props.term.termValue}< innerText:>${targetEl.innerText}<, innerHtml:>${targetEl.innerHTML}<`)
-  // if ((props.term.termValue || '') !== targetEl.innerHTML) {
-  //   emit('update-term', targetEl.innerText.trim(), targetEl.getAttribute('data-key'))
-  // }
+  if (['Space', 'Semicolon'].includes(e.code)) {
+    e.stopPropagation()
+    e.preventDefault()
+    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
+  }
 }
 
 </script>

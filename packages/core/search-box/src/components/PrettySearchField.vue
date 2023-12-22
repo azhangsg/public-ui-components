@@ -12,7 +12,6 @@
       :term="term"
       @focus-next="onFocusNext"
       @focus-prev="onFocusPrev"
-      @sZtart-search="onStartSearch"
       @update-term="onUpdateTerm"
     />
   </div>
@@ -23,7 +22,7 @@ import composables from '../composables'
 import { onMounted, watch, ref, nextTick } from 'vue'
 import SearchTerm from './SearchTerm.vue'
 import { setCursorPosition } from '../utils'
-import { KQueryTermTypes } from '../enums'
+import { UpdateTermActions, KQueryTermTypes } from '../enums'
 
 const props = defineProps({
   initialValue: {
@@ -36,69 +35,63 @@ const props = defineProps({
   },
 })
 
-const { searchTermsString, parse, parserError, searchTerms, cursorPosition, updateTerm, getActiveTerm } = composables.useKQueryParser()
+const {
+  searchTermsString,
+  parse,
+  parserError,
+  searchTerms,
+  cursorPosition,
+  updateTerm,
+  getActiveTerm,
+  getNextEditableKey,
+  getPrevEditableKey,
+} = composables.useKQueryParser()
 
 const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
 const prettyInput = ref<HTMLElement>()
 
-const setCursorForActiveTerm = (termKey: string, cursorPos: number = -1) => {
+const setCursorForActiveTerm = (termKey: string|null, cursorPos: number = -1) => {
+  if (!termKey) {
+    return
+  }
   const activeEl = prettyInput.value?.querySelector(`[data-key="${termKey}"]`) as HTMLElement
-  console.log('activeEl:', activeEl)
   if (!activeEl) {
     return
   }
   setCursorPosition(activeEl, cursorPos === -1 ? activeEl.innerText.length : cursorPos)
 
 }
-const onFocusNext = (dataKey: string) => {
-  const currentIdx = searchTerms.value.findIndex(t => t.key === dataKey)
-  console.log('onFocusNext:', dataKey, currentIdx)
-  if (currentIdx === -1 || currentIdx === searchTerms.value.length - 1) {
-    return
-  }
-  let nextEditableKey = ''
-  for (let j = currentIdx + 1; j < searchTerms.value.length; j++) {
-    if (searchTerms.value[j].isEditable && searchTerms.value[j].termValue !== '') {
-      nextEditableKey = searchTerms.value[j].key
-      break
-    }
-  }
-  setCursorForActiveTerm(nextEditableKey, 0)
+
+const onFocusNext = (termKey: string) => {
+  setCursorForActiveTerm(getNextEditableKey(termKey), 0)
 }
 
-const onFocusPrev = (dataKey: string) => {
-  const currentIdx = searchTerms.value.findIndex(t => t.key === dataKey)
-  console.log('onFocusPrev:', dataKey, currentIdx)
-  if (currentIdx < 1 || currentIdx === searchTerms.value.length) {
-    return
-  }
-
-  let prevEditableKey = ''
-  for (let j = currentIdx - 1; j >= 0; j--) {
-    if (searchTerms.value[j].isEditable && searchTerms.value[j].termValue !== '') {
-      prevEditableKey = searchTerms.value[j].key
-      break
-    }
-  }
-  setCursorForActiveTerm(prevEditableKey, -1)
+const onFocusPrev = (termKey: string) => {
+  setCursorForActiveTerm(getPrevEditableKey(termKey), -1)
 }
 
+// this is to force focus on the last term when container field gets a click
 const onClick = (e: MouseEvent) => {
-  console.log('onClick:', e)
   if ((e.target as HTMLElement).className === 'search-terms-pretty') {
     setCursorForActiveTerm(searchTerms.value[searchTerms.value.length - 1].key, 0)
   }
 }
 
-const onStartSearch = () => {
-  console.log('onStartSearch:')
-  emit('start-search')
-}
+const onUpdateTerm = async (newValue: string, termKey: string, postAction: UpdateTermActions) => {
+  console.log('onUpdateTerm:', newValue, termKey, postAction)
+  await updateTerm(newValue, termKey, postAction)
 
-const onUpdateTerm = async (newValue: string, key: string) => {
-  console.log('onUpdateTerm:', newValue, key)
-  await updateTerm(newValue, key)
+  if (postAction === UpdateTermActions.startSearch) {
+    emit('start-search')
+  }
+  /*
+  else if (postAction === UpdateTermActions.focusPrev) {
+    setCursorForActiveTerm(getPrevEditableKey(termKey), -1)
+  } else if (postAction === UpdateTermActions.focusNext) {
+    setCursorForActiveTerm(getNextEditableKey(termKey), -1)
+  }
+  */
 }
 
 watch(parserError, (newValue) => {
@@ -108,9 +101,9 @@ watch(parserError, (newValue) => {
 
 watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (newValue, oldValue) => {
   console.log('fire changed based on result of parse:', newValue)
-  if (newValue.v !== oldValue.v) {
+  if (newValue.v !== oldValue.v || newValue.p !== oldValue.p) {
     await nextTick()
-    const activeTerm = getActiveTerm(cursorPosition.value)
+    const activeTerm = getActiveTerm(newValue.p)
     console.log('activeTerm:', activeTerm)
     if (activeTerm.activeKey) {
       setCursorForActiveTerm(activeTerm.activeKey, activeTerm.cursorPosInTerm)

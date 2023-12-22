@@ -8,7 +8,6 @@ export const setCursorPosition = (textDiv: HTMLElement|undefined, customPosition
 
   // create a range
   const selectedRange = document.createRange()
-  console.log('zzzz:', textDiv.childNodes[0])
   const contentLen = (textDiv.childNodes[0].innerText || textDiv.childNodes[0].textContent || '').length
 
   selectedRange.setStart(textDiv.childNodes[0], customPosition > contentLen ? contentLen : customPosition)

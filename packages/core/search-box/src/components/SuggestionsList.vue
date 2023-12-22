@@ -1,8 +1,8 @@
 <template>
   <div class="suggestion-panel">
-    {{ props.searchTermsString }}
+    terms: {{ props.searchTermsString }}
     <br>
-    {{ suggestionPattern }}
+    pattern: {{ suggestionPattern }}
     <div v-if="fieldNamesFiltered.length">
       <h4>Feld Names</h4>
       <ul>
@@ -59,7 +59,9 @@ const fieldNames = ref<string[]>([])
 
 const suggestionPattern = computed(() => {
   const strArr = props.searchTermsString.substring(0, props.cursorPosition).split(/[\s:)(]/)
-  return strArr[strArr.length - 1]
+  const last = strArr[strArr.length - 1]
+  console.log('last:', last, strArr, props.searchTermsString.substring(0, props.cursorPosition))
+  return last === ':' ? strArr[strArr.length - 2] + last : last
 })
 
 const fieldNamesFiltered = computed(() => {
@@ -78,7 +80,7 @@ const emit = defineEmits(['suggestion-selected'])
 const setSuggestion = (suggestionType: SuggestionTypes, suggestionString: string) => {
   console.log(suggestionType, suggestionString)
   if (suggestionType === SuggestionTypes.recent) {
-    emit('suggestion-selected', suggestionString, suggestionString.length)
+    emit('suggestion-selected', suggestionString, suggestionString.length + 1)
     return
   }
 
