@@ -1,19 +1,32 @@
 <template>
   <div
-    ref="prettyInput"
     class="search-terms-pretty"
-    contenteditable="false"
-    @click="onClick"
   >
-    <SearchTerm
-      v-for="term in searchTerms"
-      :key="term.key"
-      :is-empty="searchTerms.length === 1 && searchTerms[0].termType === KQueryTermTypes.space"
-      :term="term"
-      @focus-next="onFocusNext"
-      @focus-prev="onFocusPrev"
-      @update-term="onUpdateTerm"
-    />
+    <div
+      ref="presentingContainer"
+      class="presenting"
+      contenteditable="false"
+    >
+      <SearchTerm
+        v-for="(term, index) in searchTerms"
+        :key="term.key"
+        :index="index"
+        :search-terms="searchTerms"
+        :term="term"
+      />
+    </div>
+
+    <div
+      ref="editableInput"
+      class="editable"
+      contenteditable="true"
+      placeholder="Add search criteria..."
+      @input="onInput"
+      @keydown="onKeyDown"
+      @paste="onPaste"
+    >
+      {{ initialValue }}
+    </div>
   </div>
 </template>
 
@@ -21,8 +34,7 @@
 import composables from '../composables'
 import { onMounted, watch, ref, nextTick } from 'vue'
 import SearchTerm from './SearchTerm.vue'
-import { setCursorPosition } from '../utils'
-import { UpdateTermActions, KQueryTermTypes } from '../enums'
+import { insertText, getCursorPosition, setCursorPosition } from '../utils'
 
 const props = defineProps({
   initialValue: {
@@ -41,89 +53,61 @@ const {
   parserError,
   searchTerms,
   cursorPosition,
-  updateTerm,
-  getActiveTerm,
-  getNextEditableKey,
-  getPrevEditableKey,
 } = composables.useKQueryParser()
 
 const emit = defineEmits(['search-terms-changed', 'search-terms-error', 'start-search'])
 
-const prettyInput = ref<HTMLElement>()
+const presentingContainer = ref<HTMLElement>()
+const editableInput = ref<HTMLElement>()
 
-const setCursorForActiveTerm = (termKey: string|null, cursorPos: number = -1) => {
-  if (!termKey) {
-    return
-  }
-  const activeEl = prettyInput.value?.querySelector(`[data-key="${termKey}"]`) as HTMLElement
-  if (!activeEl) {
-    return
-  }
-  setCursorPosition(activeEl, cursorPos === -1 ? activeEl.innerText.length : cursorPos)
-
-}
-
-const onFocusNext = (termKey: string) => {
-  setCursorForActiveTerm(getNextEditableKey(termKey), 0)
-}
-
-const onFocusPrev = (termKey: string) => {
-  setCursorForActiveTerm(getPrevEditableKey(termKey), -1)
-}
-
-// this is to force focus on the last term when container field gets a click
-const onClick = (e: MouseEvent) => {
-  if ((e.target as HTMLElement).className === 'search-terms-pretty') {
-    setCursorForActiveTerm(searchTerms.value[searchTerms.value.length - 1].key, 0)
-  }
-}
-
-const onUpdateTerm = async (newValue: string, termKey: string, postAction: UpdateTermActions) => {
-  console.log('onUpdateTerm:', newValue, termKey, postAction)
-  await updateTerm(newValue, termKey, postAction)
-
-  if (postAction === UpdateTermActions.startSearch) {
+const onKeyDown = async (e: KeyboardEvent) => {
+  const targetEl = (e.target as HTMLElement)
+  if (e.code === 'Enter') {
+    console.log('keydown:', e)
+    await parse(targetEl.innerText, getCursorPosition(targetEl), false)
     emit('start-search')
+    e.stopPropagation()
+    e.preventDefault()
+    return false
   }
-  /*
-  else if (postAction === UpdateTermActions.focusPrev) {
-    setCursorForActiveTerm(getPrevEditableKey(termKey), -1)
-  } else if (postAction === UpdateTermActions.focusNext) {
-    setCursorForActiveTerm(getNextEditableKey(termKey), -1)
-  }
-  */
+}
+
+const onPaste = (e: ClipboardEvent) => {
+  insertText(e)
+  const targetEl = (e.target as HTMLElement)
+  parse(targetEl.innerText, getCursorPosition(targetEl), false)
+}
+const onInput = (e: Event) => {
+  console.log('onInput:', e)
+  const targetEl = (e.target as HTMLElement)
+
+  parse(targetEl.innerText, getCursorPosition(targetEl), false)
 }
 
 watch(parserError, (newValue) => {
-  console.log('!!! errorValue:', newValue)
+  console.log('errorValue:', newValue)
   emit('search-terms-error', newValue)
 })
 
-watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (newValue, oldValue) => {
+watch(() => ({ v: searchTermsString.value, p: cursorPosition.value }), async (newValue) => {
   console.log('fire changed based on result of parse:', newValue)
-  if (newValue.v !== oldValue.v || newValue.p !== oldValue.p) {
-    await nextTick()
-    const activeTerm = getActiveTerm(newValue.p)
-    console.log('activeTerm:', activeTerm)
-    if (activeTerm.activeKey) {
-      setCursorForActiveTerm(activeTerm.activeKey, activeTerm.cursorPosInTerm)
-    }
-  }
-
   emit('search-terms-changed', newValue.v, newValue.p)
 })
 
 watch(() => ({ v: props.initialValue, p: props.initialCursorPosition }), async (item) => {
-  console.log('fire parse based on changed props ')
+  console.log('fire parse based on changed props: ', item)
   await parse(item.v, item.p, false)
+  await nextTick()
+  setCursorPosition(editableInput.value, props.initialCursorPosition)
 })
 
 onMounted(async () => {
   console.log('onMOunted', props.initialValue, props.initialCursorPosition)
   parse(props.initialValue, props.initialCursorPosition, false)
   await nextTick()
-  // setCursorPosition(prettyInput.value, props.initialCursorPosition)
+  setCursorPosition(editableInput.value, props.initialCursorPosition)
 })
+
 </script>
 
 <style lang="scss" scoped>
@@ -135,15 +119,36 @@ onMounted(async () => {
 
   padding-left: 4px;
   padding-right: 4px;
+  position: relative;
   width: 100%;
 
-  &:focus {
-    border-radius: 0px;
-    box-shadow: 0px;
-    outline: none;
+  .presenting {
+    bottom: 0;
+    left: 0;
+  position: absolute;
+    right: 0;
+
+    top: 0;
+    user-select: none;
   }
-  .before-empty {
-    width:4px;
+
+  .editable {
+    caret-color: black;
+    color: transparent;
+    position: relative;
+    white-space: pre;
+    &:focus {
+      border-radius: 0px;
+      box-shadow: 0px;
+      outline: none;
+    }
+    &:empty:not(:focus):before {
+      color: gray;
+      content: attr(placeholder);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
   }
 }
 

@@ -1,12 +1,7 @@
 <template>
   <span
-    :class="`search-term ${term.termType} ${isEmpty ? 'empty': ''}`"
-    :contenteditable="term.isEditable"
+    :class="`search-term ${term.termType} ${clauseEnd} ${clauseStart}`"
     :data-key="term.key"
-    :placeholder="isEmpty ? 'Add search criteria...' : ''"
-    @keydown="onKeyDown"
-    @keyup="onKeyUp"
-    @paste="onPaste"
   >
     {{ term.termValue }}
   </span>
@@ -14,94 +9,51 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { KQueryTermTypes } from './../enums'
 import type { KQueryTerm } from './../types'
-import { getCursorPosition, insertText } from '../utils'
-import { UpdateTermActions, KQueryTermTypes } from '../enums'
 
 const props = defineProps({
   term: {
     type: Object as PropType<KQueryTerm>,
     required: true,
   },
-  isEmpty: {
-    type: Boolean,
-    default: false,
+  index: {
+    type: Number,
+    required: true,
+  },
+  searchTerms: {
+    type: Object as PropType<KQueryTerm[]>,
+    required: true,
   },
 })
 
-const emit = defineEmits(['focus-next', 'focus-prev', 'start-search', 'update-term'])
-
-const afterKeyUp = ref<string>(props.term.termValue)
-
-const onKeyDown = (e: KeyboardEvent) => {
-  const targetEl = (e.target as HTMLElement)
-  if (e.code === 'Enter') {
-    console.log('keydown:', e)
-    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.startSearch)
-    e.stopPropagation()
-    e.preventDefault()
-    return false
-  }
-
-  const cursorPos = getCursorPosition(targetEl)
-  console.log('searchTerm keyDown:', e, targetEl.getAttribute('data-key'), `>${targetEl.innerText}<`, cursorPos, targetEl.innerText.length)
-  if (e.code === 'ArrowRight' && cursorPos === targetEl.innerText.length) {
-    e.stopPropagation()
-    e.preventDefault()
-    emit('focus-next', targetEl.getAttribute('data-key'))
-  }
-  if (e.code === 'ArrowLeft' && (cursorPos === 0 || (cursorPos === 1 && props.term.termType === KQueryTermTypes.space))) {
-    e.stopPropagation()
-    e.preventDefault()
-    emit('focus-prev', targetEl.getAttribute('data-key'))
-  }
-
-  if (e.code === 'Backspace' && (cursorPos === 0 || (cursorPos === 1 && props.term.termType === KQueryTermTypes.space))) {
-    e.stopPropagation()
-    e.preventDefault()
-
-    console.log('emitting update-term')
-    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusPrev)
-  }
-}
-
-const onPaste = (e: ClipboardEvent) => {
-  console.log('onPaste:', e)
-  insertText(e)
-  const targetEl = (e.target as HTMLElement)
-
-  emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
-}
-
-const onKeyUp = (e: KeyboardEvent) => {
-  console.log('onKeyUp:', e)
-  const targetEl = (e.target as HTMLElement)
-  if (props.isEmpty) {
-    if (targetEl.innerText.trim() !== '') {
-      targetEl.classList.remove('empty')
-    } else {
-      targetEl.classList.add('empty')
+const clauseEnd = computed(() => {
+  if ([KQueryTermTypes.fieldValue, KQueryTermTypes.fieldName].includes(props.term.termType)) {
+    console.log('???', props.term, props.index)
+    if (props.index < props.searchTerms.length - 1 && props.searchTerms[props.index + 1].termType === KQueryTermTypes.colon) {
+      console.log('!!!')
+      return 'in-clause-end'
     }
   }
+  return ''
+})
 
-  if (['Space', 'Semicolon', 'ArrowRight'].includes(e.code)) {
-    e.stopPropagation()
-    e.preventDefault()
-    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
+const clauseStart = computed(() => {
+  if ([KQueryTermTypes.fieldValue, KQueryTermTypes.fieldName].includes(props.term.termType)) {
+    if (props.index > 0 && props.searchTerms[props.index - 1].termType === KQueryTermTypes.colon) {
+      return 'in-clause-start'
+    }
   }
-  if (afterKeyUp.value !== targetEl.innerText) {
-    afterKeyUp.value = targetEl.innerText
-    emit('update-term', targetEl.innerText, targetEl.getAttribute('data-key'), UpdateTermActions.focusNext)
-  }
-
-}
+  return ''
+})
 
 </script>
 
 <style lang="scss" scoped>
 .search-term {
   display: inline-block;
+  white-space: pre;
   &:after {
     content: '';
     display: inline-block;
@@ -117,30 +69,34 @@ const onKeyUp = (e: KeyboardEvent) => {
   }
 
   &.fieldValue {
-    background-color: blue;
+    background-color: rgb(0, 89, 255);
+    border-radius: 6px;
     color: white;
-
+    &.in-clause-start {
+      border-radius: 0 6px 6px 0;
+    }
   }
 
   &.fieldName {
-    background-color: blue;
+    background-color: rgb(0, 89, 255);
+    border-radius: 6px;
     color: white;
+    &.in-clause-end {
+      border-radius: 6px 0 0 6px;
+    }
+
   }
   &.colon {
-    background-color: blue;
+    background-color: rgb(0, 89, 255);
     color: magenta;
   }
 
   &.or {
-    // background-color: white;
     color: magenta;
-    // margin:4px;
   }
 
   &.and {
-    // background-color: white;
     color: magenta;
-    // margin:4px;
   }
 
   &.exclusion {
@@ -149,38 +105,27 @@ const onKeyUp = (e: KeyboardEvent) => {
 
   &.grouping {
     color: magenta;
-    padding-right: 2px;
+    //padding-right: 2px;
   }
   &.grouping-end {
     color: magenta;
-    padding-left: 2px;
+    //padding-left: 2px;
   }
 
   &.clause {
-    background-color: blue;
+    background-color: rgb(0, 89, 255);
     border-bottom-left-radius: 6px;
     border-top-left-radius: 6px;
     color: white;
-    min-width: 6px;
+    //min-width: 6px;
   }
 
   &.clause-end {
-    background-color: blue;
+    background-color: rgb(0, 89, 255);
     border-bottom-right-radius: 6px;
     border-top-right-radius: 6px;
     color: white;
-    min-width: 6px;
+    //min-width: 6px;
   }
-
-  &.space {
-    padding: 0 4px;
-  }
-  &.empty:not(:focus):before {
-    color: gray;
-    content: attr(placeholder);
-    font-size: 18px;
-    pointer-events: none;
-  }
-
 }
 </style>
