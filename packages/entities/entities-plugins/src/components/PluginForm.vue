@@ -492,8 +492,7 @@ const buildFormSchema = (parentKey: string, response: Record<string, any>, initi
     }, {})
   }
 
-  // alphabetically sort the schema keys and handle specifial configuration for each field type
-  Object.keys(schema).sort().forEach(key => {
+  Object.keys(schema).forEach(key => {
     const scheme = schema[key]
     const field = parentKey ? `${parentKey}-${key}` : `${key}`
 

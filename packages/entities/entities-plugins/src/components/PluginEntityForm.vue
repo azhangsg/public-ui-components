@@ -329,7 +329,7 @@ const getModel = (): Record<string, any> => {
 
             break
 
-            // Handle values that aren't strings but should be.
+          // Handle values that aren't strings but should be.
           case 'string':
             fieldValue = (fieldValue == null) ? '' : String(fieldValue)
             break
@@ -525,7 +525,7 @@ const initFormModel = (): void => {
     } else if (props.record.config) { // typical plugins
       // scope fields
       if ((props.record.consumer_id || props.record.consumer) || (props.record.service_id || props.record.service) ||
-          (props.record.route_id || props.record.route) || (props.record.consumer_group_id || props.record.consumer_group)) {
+        (props.record.route_id || props.record.route) || (props.record.consumer_group_id || props.record.consumer_group)) {
         updateModel({
           service_id: props.record.service_id || props.record.service,
           route_id: props.record.route_id || props.record.route,
@@ -585,7 +585,17 @@ watch(() => props.schema, (newSchema, oldSchema) => {
 
   Object.assign(formModel, form.model)
 
-  formSchema.value = { fields: formSchema.value?.fields?.map((r: Record<string, any>) => { return { ...r, disabled: r.disabled || false } }) }
+  formSchema.value = {
+    fields: formSchema.value?.fields?.map((r: Record<string, any>) => {
+      return { ...r, disabled: r.disabled || false }
+    }).map((f) => {
+      console.log(f)
+      return f
+    }).sort((f1, f2) => {
+      console.log(f1)
+      return f1.name.localeCompare(f2.name)
+    }),
+  }
   Object.assign(originalModel, JSON.parse(JSON.stringify(form.model)))
   sharedFormName.value = getSharedFormName(form.model.name)
 
@@ -596,7 +606,28 @@ onBeforeMount(() => {
   form.value = parseSchema(props.schema)
 
   Object.assign(formModel, form.value?.model || {})
-  formSchema.value = form.value?.schema || {}
+  const schema = form.value?.schema || {}
+  if (schema.fields) {
+    schema.fields = schema.fields.map((r: Record<string, any>) => {
+      return { ...r, disabled: r.disabled || false }
+    }).sort((f1: any, f2: any) => {
+      if (f1.model.startsWith('config-') !== f2.model.startsWith('config-')) {
+        return f1.model.startsWith('config-') ? 1 : -1
+      }
+
+      if (!f1.model.startsWith('config-')) {
+        return 0
+      }
+
+      if (f1.required !== f2.required) {
+        return f1.required ? -1 : 1
+      }
+
+      return 0
+    })
+  }
+  formSchema.value = schema
+  console.log(formSchema.value)
 
   initFormModel()
 })
@@ -611,12 +642,13 @@ onBeforeMount(() => {
     transition: opacity 0.5s;
   }
 
-  .fade-enter-from, .fade-leave-to {
+  .fade-enter-from,
+  .fade-leave-to {
     opacity: 0;
   }
 
   :deep(.vue-form-generator) {
-    & > fieldset {
+    &>fieldset {
       border: none;
       padding: $kui-space-0;
     }
@@ -624,7 +656,7 @@ onBeforeMount(() => {
     .field-switch {
       #enabled {
         &:not(:checked) {
-          & + .label {
+          &+.label {
             background-color: $kui-color-background-neutral-weak;
           }
         }
@@ -733,7 +765,7 @@ onBeforeMount(() => {
     }
 
     .k-checkbox {
-       label {
+      label {
         margin: $kui-space-0;
         order: 1
       }
