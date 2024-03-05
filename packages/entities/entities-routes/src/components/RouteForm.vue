@@ -102,7 +102,9 @@
               >
                 {{ protocol.toUpperCase() }}
               </span>
-              <span class="routing-rules-title">{{ t('form.sections.routingRules.title') }}</span>
+              <span class="routing-rules-title">
+                {{ config.routerFlavor !== 'expressions' ? t('form.sections.routingRules.title'): t('form.sections.routingExpression.title') }}
+              </span>
             </div>
           </template>
 
@@ -130,99 +132,110 @@
             </template>
           </KAlert>
 
-          <!-- Routing Rules Fields -->
-          <TransitionGroup name="appear">
-            <!-- paths -->
-            <RouteFormPathsFields
-              v-if="form.fields.paths"
-              key="paths-container"
-              v-model="form.fields.paths"
-              @add="handleAddRoutingRuleEntity(RoutingRulesEntities.PATHS)"
-              @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.PATHS, index)"
-            />
+          <!-- Traditional (compatible) router -->
+          <template v-if="narrowDownFields(form.fields, config.routerFlavor, 'traditional')">
+            <!-- Routing Rules Fields -->
+            <TransitionGroup name="appear">
+              <!-- paths -->
+              <RouteFormPathsFields
+                v-if="form.fields.paths"
+                key="paths-container"
+                v-model="form.fields.paths"
+                @add="handleAddRoutingRuleEntity(RoutingRulesEntities.PATHS)"
+                @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.PATHS, index)"
+              />
 
-            <!-- snis -->
-            <RouteFormSnisFields
-              v-if="form.fields.snis"
-              key="snis-container"
-              v-model="form.fields.snis"
-              @add="handleAddRoutingRuleEntity(RoutingRulesEntities.SNIS)"
-              @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.SNIS, index)"
-            />
+              <!-- snis -->
+              <RouteFormSnisFields
+                v-if="form.fields.snis"
+                key="snis-container"
+                v-model="form.fields.snis"
+                @add="handleAddRoutingRuleEntity(RoutingRulesEntities.SNIS)"
+                @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.SNIS, index)"
+              />
 
-            <!-- hosts -->
-            <RouteFormHostsFields
-              v-if="form.fields.hosts"
-              key="hosts-container"
-              v-model="form.fields.hosts"
-              @add="handleAddRoutingRuleEntity(RoutingRulesEntities.HOSTS)"
-              @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.HOSTS, index)"
-            />
+              <!-- hosts -->
+              <RouteFormHostsFields
+                v-if="form.fields.hosts"
+                key="hosts-container"
+                v-model="form.fields.hosts"
+                @add="handleAddRoutingRuleEntity(RoutingRulesEntities.HOSTS)"
+                @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.HOSTS, index)"
+              />
 
-            <!-- methods -->
-            <RouteFormMethodsFields
-              v-if="form.fields.methods"
-              key="methods-container"
-              v-model="form.fields.methods"
-              :custom-methods="customMethods"
-              @remove="handleRemoveRoutingRuleEntity(RoutingRulesEntities.METHODS)"
-              @update-custom-methods="(methods: string[]) => customMethods = methods"
-            />
+              <!-- methods -->
+              <RouteFormMethodsFields
+                v-if="form.fields.methods"
+                key="methods-container"
+                v-model="form.fields.methods"
+                :custom-methods="customMethods"
+                @remove="handleRemoveRoutingRuleEntity(RoutingRulesEntities.METHODS)"
+                @update-custom-methods="(methods: string[]) => customMethods = methods"
+              />
 
-            <!-- headers -->
-            <RouteFormHeadersFields
-              v-if="form.fields.headers"
-              key="headers-container"
-              v-model="form.fields.headers"
-              @add="handleAddRoutingRuleEntity(RoutingRulesEntities.HEADERS)"
-              @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.HEADERS, index)"
-            />
+              <!-- headers -->
+              <RouteFormHeadersFields
+                v-if="form.fields.headers"
+                key="headers-container"
+                v-model="form.fields.headers"
+                @add="handleAddRoutingRuleEntity(RoutingRulesEntities.HEADERS)"
+                @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.HEADERS, index)"
+              />
 
-            <!-- sources -->
-            <RouteFormSourcesFields
-              v-if="form.fields.sources"
-              key="sources-container"
-              v-model="form.fields.sources"
-              @add="handleAddRoutingRuleEntity(RoutingRulesEntities.SOURCES)"
-              @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.SOURCES, index)"
-            />
+              <!-- sources -->
+              <RouteFormSourcesFields
+                v-if="form.fields.sources"
+                key="sources-container"
+                v-model="form.fields.sources"
+                @add="handleAddRoutingRuleEntity(RoutingRulesEntities.SOURCES)"
+                @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.SOURCES, index)"
+              />
 
-            <!-- destinations -->
-            <RouteFormDestinationsFields
-              v-if="form.fields.destinations"
-              key="destinations-container"
-              v-model="form.fields.destinations"
-              @add="handleAddRoutingRuleEntity(RoutingRulesEntities.DESTINATIONS)"
-              @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.DESTINATIONS, index)"
-            />
-          </TransitionGroup>
+              <!-- destinations -->
+              <RouteFormDestinationsFields
+                v-if="form.fields.destinations"
+                key="destinations-container"
+                v-model="form.fields.destinations"
+                @add="handleAddRoutingRuleEntity(RoutingRulesEntities.DESTINATIONS)"
+                @remove="(index: number) => handleRemoveRoutingRuleEntity(RoutingRulesEntities.DESTINATIONS, index)"
+              />
+            </TransitionGroup>
 
-          <!-- routing rules selector  -->
-          <div
-            v-if="displayRoutingRulesSelector"
-            class="route-form-routing-rules-selector-container"
-          >
-            <hr>
-            <div class="route-form-routing-rules-selector-options">
-              <ul>
-                <li
-                  v-for="entity in routingRulesPerProtocolMap[form.fields.protocols]"
-                  :key="entity"
-                >
-                  <label
-                    :aria-disabled="!!form.fields[entity as RoutingRuleEntity]"
-                    class="option"
-                    :class="{ 'is-selected': form.fields[entity as RoutingRuleEntity] }"
-                    :data-testid="`routing-rule-${entity}`"
-                    role="button"
-                    @click="handleAddRoutingRuleEntity(entity)"
+            <!-- routing rules selector  -->
+            <div
+              v-if="displayRoutingRulesSelector"
+              class="route-form-routing-rules-selector-container"
+            >
+              <hr>
+              <div class="route-form-routing-rules-selector-options">
+                <ul>
+                  <li
+                    v-for="entity in routingRulesPerProtocolMap[form.fields.protocols]"
+                    :key="entity"
                   >
-                    {{ getRoutingRuleLabel(entity) }}
-                  </label>
-                </li>
-              </ul>
+                    <label
+                      :aria-disabled="!!form.fields[entity as RoutingRuleEntity]"
+                      class="option"
+                      :class="{ 'is-selected': form.fields[entity as RoutingRuleEntity] }"
+                      :data-testid="`routing-rule-${entity}`"
+                      role="button"
+                      @click="handleAddRoutingRuleEntity(entity)"
+                    >
+                      {{ getRoutingRuleLabel(entity) }}
+                    </label>
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
+          </template>
+
+          <!-- Expressions router -->
+          <template v-else>
+            <RouteFormExpressionsEditorLoader
+              v-model="form.fields.expression"
+              :protocol="exprEditorProtocol"
+            />
+          </template>
         </KCard>
 
         <!-- Advanced Fields -->
@@ -232,7 +245,7 @@
         >
           <div class="route-form-fields-container route-form-advanced-fields-container">
             <KSelect
-              v-if="form.fields.paths"
+              v-if="narrowDownFields(form.fields, config.routerFlavor, 'traditional') && form.fields.paths"
               v-model="form.fields.path_handling"
               data-testid="route-form-path-handling"
               :items="pathHandlingOptions"
@@ -250,6 +263,7 @@
               width="100%"
             />
             <KInput
+              v-if="narrowDownFields(form.fields, config.routerFlavor, 'traditional')"
               v-model="form.fields.regex_priority"
               autocomplete="off"
               data-testid="route-form-regex-priority"
@@ -307,46 +321,49 @@
 
 <script lang="ts" setup>
 import {
-  useAxios,
-  useErrors,
-  useDebouncedFilter,
-  useGatewayFeatureSupported,
-  EntityFormSection,
   EntityBaseForm,
   EntityBaseFormType,
+  EntityFormSection,
+  useAxios,
+  useDebouncedFilter,
+  useErrors,
+  useGatewayFeatureSupported,
 } from '@kong-ui-public/entities-shared'
-import composables from '../composables'
-import '@kong-ui-public/entities-shared/dist/style.css'
+import type { SelectItem } from '@kong/kongponents'
+import type { AxiosError, AxiosResponse } from 'axios'
 import type { PropType } from 'vue'
 import { computed, nextTick, onBeforeMount, onMounted, reactive, ref, watch } from 'vue'
-import type {
-  KonnectRouteFormConfig,
-  KongManagerRouteFormConfig,
-  RouteStateFields,
-  RouteState,
-  RoutePayload,
-  RoutingRuleEntity,
-  Method,
-  HeaderFields,
-  MethodsFields,
-  Sources,
-  Destinations,
-  Headers,
-  Protocol,
-} from '../types'
-import { RoutingRulesEntities } from '../types'
 import { useRouter } from 'vue-router'
-import type { AxiosError, AxiosResponse } from 'axios'
+import composables from '../composables'
 import endpoints from '../routes-endpoints'
-import RouteFormPathsFields from './RouteFormPathsFields.vue'
-import RouteFormSnisFields from './RouteFormSnisFields.vue'
+import {
+  RoutingRulesEntities,
+  narrowDownFields,
+  type Destinations,
+  type HeaderFields,
+  type Headers,
+  type KongManagerRouteFormConfig,
+  type KonnectRouteFormConfig,
+  type Method,
+  type MethodsFields,
+  type Protocol,
+  type RoutePayload,
+  type RouteState,
+  type RouteStateFields,
+  type RoutingRuleEntity,
+  type Sources,
+} from '../types'
+import { isRoutePayloadValid } from '../utilities'
+import RouteFormDestinationsFields from './RouteFormDestinationsFields.vue'
+import RouteFormHeadersFields from './RouteFormHeadersFields.vue'
 import RouteFormHostsFields from './RouteFormHostsFields.vue'
 import RouteFormMethodsFields from './RouteFormMethodsFields.vue'
-import RouteFormHeadersFields from './RouteFormHeadersFields.vue'
+import RouteFormPathsFields from './RouteFormPathsFields.vue'
+import RouteFormSnisFields from './RouteFormSnisFields.vue'
 import RouteFormSourcesFields from './RouteFormSourcesFields.vue'
-import RouteFormDestinationsFields from './RouteFormDestinationsFields.vue'
-import { isRoutePayloadValid } from '../utilities'
-import type { SelectItem } from '@kong/kongponents'
+
+import '@kong-ui-public/entities-shared/dist/style.css'
+import RouteFormExpressionsEditorLoader from './RouteFormExpressionsEditorLoader.vue'
 
 // Component props - This structure must exist in ALL entity components, with the exclusion of unneeded action props (e.g. if you don't need `canDelete`, just exclude it)
 const props = defineProps({
@@ -401,10 +418,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits<{
-  (e: 'update', data: RoutePayload): void,
+  (e: 'update', data: RoutePayload<typeof props.config.routerFlavor>): void,
   (e: 'error', error: AxiosError): void,
   (e: 'loading', isLoading: boolean): void,
-  (e: 'model-updated', val: RoutePayload): void,
+  (e: 'model-updated', val: RoutePayload<typeof props.config.routerFlavor>): void,
 }>()
 
 const { i18nT, i18n, i18n: { t } } = composables.useI18n()
@@ -421,39 +438,71 @@ const getSelectedService = (item: any) => {
   return item.name ? `${item.name} - ${item.value}` : item.value
 }
 
-const form = reactive<RouteState>({
-  fields: {
-    service_id: '',
-    name: '',
-    tags: '',
-    regex_priority: 0,
-    path_handling: 'v0',
-    preserve_host: false,
-    https_redirect_status_code: 426,
-    protocols: 'http,https',
-    request_buffering: true,
-    response_buffering: true,
-    strip_path: true,
-    ...(!props.routeId && { paths: [''] }),
-  },
+const form = reactive({
+  fields: props.config.routerFlavor !== 'expressions'
+    ? {
+      service_id: '',
+      name: '',
+      tags: '',
+      regex_priority: 0,
+      path_handling: 'v0',
+      preserve_host: false,
+      https_redirect_status_code: 426,
+      protocols: 'http,https',
+      request_buffering: true,
+      response_buffering: true,
+      strip_path: true,
+      ...(!props.routeId && { paths: [''] }),
+    }
+    : {
+      name: '',
+      protocols: 'http,https',
+      https_redirect_status_code: 426,
+      strip_path: true,
+      preserve_host: false,
+      request_buffering: true,
+      response_buffering: true,
+      tags: '',
+      service_id: '',
+      priority: 0,
+      expression: '',
+    },
   isReadonly: false,
   errorMessage: '',
-})
+} as RouteState<typeof props.config.routerFlavor>)
+
+const exprEditorProtocol = computed(() => form.fields.protocols.split(',')[0])
+
 const customMethods = ref<string[]>([''])
 
-const originalFields = reactive<RouteStateFields>({
-  service_id: '',
-  name: '',
-  tags: '',
-  regex_priority: 0,
-  path_handling: 'v0',
-  preserve_host: false,
-  https_redirect_status_code: 426,
-  protocols: 'http,https',
-  request_buffering: true,
-  response_buffering: true,
-  strip_path: true,
-})
+const originalFields = reactive(
+  props.config.routerFlavor !== 'expressions'
+    ? {
+      service_id: '',
+      name: '',
+      tags: '',
+      regex_priority: 0,
+      path_handling: 'v0',
+      preserve_host: false,
+      https_redirect_status_code: 426,
+      protocols: 'http,https',
+      request_buffering: true,
+      response_buffering: true,
+      strip_path: true,
+    } as RouteStateFields<typeof props.config.routerFlavor>
+    : {
+      name: '',
+      protocols: 'http,https',
+      https_redirect_status_code: 426,
+      strip_path: true,
+      preserve_host: false,
+      request_buffering: true,
+      response_buffering: true,
+      tags: '',
+      service_id: '',
+      priority: 0,
+    } as RouteStateFields<typeof props.config.routerFlavor>,
+)
 
 const initialRoutingRulesValues = {
   [RoutingRulesEntities.PATHS]: [''] as string[],
@@ -570,12 +619,17 @@ const fetchErrorHandler = (err: AxiosError): void => {
 }
 
 const setMethods = (methods: Method[]): void => {
-  form.fields.methods = initialRoutingRulesValues[RoutingRulesEntities.METHODS]
-  methods.forEach(method => {
-    if (form.fields.methods) {
-      form.fields.methods[method] = true
-    }
-  })
+  const { fields } = form
+  if (narrowDownFields(fields, props.config.routerFlavor, 'traditional')) {
+    fields.methods = initialRoutingRulesValues[RoutingRulesEntities.METHODS]
+    methods.forEach(method => {
+      if (fields.methods) {
+        fields.methods[method] = true
+      }
+    })
+  } else {
+    console.warn('setMethods is only supported for "traditional" router')
+  }
 }
 
 const formatHeaders = (items: Headers): HeaderFields[] => {
@@ -605,106 +659,133 @@ const cleanDataArr = (entity: string, originalData: any) => {
 }
 
 const getHeaders = (): Headers | null => {
-  const headers: HeaderFields[] = cleanDataArr(RoutingRulesEntities.HEADERS, form.fields.headers || []) || initialRoutingRulesValues[RoutingRulesEntities.HEADERS]
-  if (headers.length === 0) {
+  const { fields } = form
+
+  if (narrowDownFields(fields, props.config.routerFlavor, 'traditional')) {
+    const headers: HeaderFields[] = cleanDataArr(RoutingRulesEntities.HEADERS, fields.headers || []) || initialRoutingRulesValues[RoutingRulesEntities.HEADERS]
+    if (headers.length === 0) {
+      return null
+    }
+    const headerObj = {} as Headers
+
+    headers.forEach(item => {
+      headerObj[item.header] = item.values.split(',')
+    })
+
+    return headerObj
+  } else {
+    console.warn('getHeaders is only supported for "traditional" router')
     return null
   }
-  const headerObj = {} as Headers
-
-  headers.forEach(item => {
-    headerObj[item.header] = item.values.split(',')
-  })
-
-  return headerObj
 }
 
 const handleAddRoutingRuleEntity = (entity: string): void => {
-  if (entity === RoutingRulesEntities.PATHS) {
-    if (!form.fields.paths) {
-      // spread objects and arrays to avoid mutating the original values
-      form.fields.paths = [...initialRoutingRulesValues[RoutingRulesEntities.PATHS]]
-    } else {
-      form.fields.paths.push([...initialRoutingRulesValues[RoutingRulesEntities.PATHS]][0])
-    }
-  }
+  const { fields } = form
 
-  if (entity === RoutingRulesEntities.SNIS) {
-    if (!form.fields.snis) {
-      form.fields.snis = [...initialRoutingRulesValues[RoutingRulesEntities.SNIS]]
-    } else {
-      form.fields.snis.push([...initialRoutingRulesValues[RoutingRulesEntities.SNIS]][0])
+  if (narrowDownFields(fields, props.config.routerFlavor, 'traditional')) {
+    if (entity) {
+      if (entity === RoutingRulesEntities.PATHS) {
+        if (!fields.paths) {
+          // spread objects and arrays to avoid mutating the original values
+          fields.paths = [...initialRoutingRulesValues[RoutingRulesEntities.PATHS]]
+        } else {
+          fields.paths.push([...initialRoutingRulesValues[RoutingRulesEntities.PATHS]][0])
+        }
+      }
     }
-  }
 
-  if (entity === RoutingRulesEntities.HOSTS) {
-    if (!form.fields.hosts) {
-      form.fields.hosts = [...initialRoutingRulesValues[RoutingRulesEntities.HOSTS]]
-    } else {
-      form.fields.hosts.push([...initialRoutingRulesValues[RoutingRulesEntities.HOSTS]][0])
+    if (entity === RoutingRulesEntities.SNIS) {
+      if (!fields.snis) {
+        fields.snis = [...initialRoutingRulesValues[RoutingRulesEntities.SNIS]]
+      } else {
+        fields.snis.push([...initialRoutingRulesValues[RoutingRulesEntities.SNIS]][0])
+      }
     }
-  }
 
-  if (entity === RoutingRulesEntities.METHODS) {
-    if (!form.fields.methods) {
-      form.fields.methods = { ...initialRoutingRulesValues[RoutingRulesEntities.METHODS] }
+    if (entity === RoutingRulesEntities.HOSTS) {
+      if (!fields.hosts) {
+        fields.hosts = [...initialRoutingRulesValues[RoutingRulesEntities.HOSTS]]
+      } else {
+        fields.hosts.push([...initialRoutingRulesValues[RoutingRulesEntities.HOSTS]][0])
+      }
     }
-  }
 
-  if (entity === RoutingRulesEntities.HEADERS) {
-    if (!form.fields.headers) {
-      form.fields.headers = [{ ...initialRoutingRulesValues[RoutingRulesEntities.HEADERS][0] }]
-    } else {
-      form.fields.headers.push({ ...initialRoutingRulesValues[RoutingRulesEntities.HEADERS][0] })
+    if (entity === RoutingRulesEntities.METHODS) {
+      if (!fields.methods) {
+        fields.methods = { ...initialRoutingRulesValues[RoutingRulesEntities.METHODS] }
+      }
     }
-  }
 
-  if (entity === RoutingRulesEntities.SOURCES) {
-    if (!form.fields.sources) {
-      form.fields.sources = [{ ...initialRoutingRulesValues[RoutingRulesEntities.SOURCES][0] }]
-    } else {
-      form.fields.sources.push({ ...initialRoutingRulesValues[RoutingRulesEntities.SOURCES][0] })
+    if (entity === RoutingRulesEntities.HEADERS) {
+      if (!fields.headers) {
+        fields.headers = [{ ...initialRoutingRulesValues[RoutingRulesEntities.HEADERS][0] }]
+      } else {
+        fields.headers.push({ ...initialRoutingRulesValues[RoutingRulesEntities.HEADERS][0] })
+      }
     }
-  }
 
-  if (entity === RoutingRulesEntities.DESTINATIONS) {
-    if (!form.fields.destinations) {
-      form.fields.destinations = [{ ...initialRoutingRulesValues[RoutingRulesEntities.DESTINATIONS][0] }]
-    } else {
-      form.fields.destinations.push({ ...initialRoutingRulesValues[RoutingRulesEntities.DESTINATIONS][0] })
+    if (entity === RoutingRulesEntities.SOURCES) {
+      if (!fields.sources) {
+        fields.sources = [{ ...initialRoutingRulesValues[RoutingRulesEntities.SOURCES][0] }]
+      } else {
+        fields.sources.push({ ...initialRoutingRulesValues[RoutingRulesEntities.SOURCES][0] })
+      }
     }
+
+    if (entity === RoutingRulesEntities.DESTINATIONS) {
+      if (!fields.destinations) {
+        fields.destinations = [{ ...initialRoutingRulesValues[RoutingRulesEntities.DESTINATIONS][0] }]
+      } else {
+        fields.destinations.push({ ...initialRoutingRulesValues[RoutingRulesEntities.DESTINATIONS][0] })
+      }
+    }
+  } else {
+    console.warn('handleAddRoutingRuleEntity is only supported for "traditional" router')
   }
 }
 
 // display or hide routing rules selector
 const displayRoutingRulesSelector = computed(() => {
-  return routingRulesPerProtocolMap[form.fields.protocols]?.filter(protocol => !form.fields[protocol as RoutingRuleEntity])
+  const { fields } = form
+
+  if (narrowDownFields(fields, props.config.routerFlavor, 'traditional')) {
+    return routingRulesPerProtocolMap[fields.protocols]?.filter(protocol => !fields[protocol as RoutingRuleEntity])
+  }
+
+  return false
 })
 
 // removes rule entity from the form
 // or particular entry from particular rule entity if index is provided
 const handleRemoveRoutingRuleEntity = async (entity: string, index?: number): Promise<void> => {
-  if (typeof index !== 'undefined') {
-    let items: any = []
+  const { fields } = form
 
-    items = form.fields[entity as RoutingRuleEntity]
+  if (narrowDownFields(fields, props.config.routerFlavor, 'traditional')) {
+    if (typeof index !== 'undefined') {
+      let items: any = []
 
-    items.splice(index, 1)
+      items = fields[entity as RoutingRuleEntity]
 
-    if (items.length) {
-      form.fields[entity as RoutingRuleEntity] = items
+      items.splice(index, 1)
 
-      // skip removing rule entity if it's not empty
-      return
+      if (items.length) {
+        fields[entity as RoutingRuleEntity] = items
+
+        // skip removing rule entity if it's not empty
+        return
+      }
     }
+
+    await nextTick(() => {
+      delete fields[entity as RoutingRuleEntity]
+
+      if (entity === RoutingRulesEntities.METHODS) {
+        customMethods.value = ['']
+      }
+    })
+  } else {
+    console.warn('handleRemoveRoutingRuleEntity is only supported for "traditional" router')
   }
-
-  await nextTick(() => {
-    delete form.fields[entity as RoutingRuleEntity]
-
-    if (entity === RoutingRulesEntities.METHODS) {
-      customMethods.value = ['']
-    }
-  })
 }
 
 const getRoutingRuleLabel = (entity: string): string => {
@@ -732,17 +813,22 @@ const sanitizeRoutingRulesEntities = () => {
 
 // returns methods formatted in the payload format, except for custom methods (those are handled separately)
 const selectedMethods = computed((): Method[] => {
-  const methods: Method[] = []
+  if (narrowDownFields(form.fields, props.config.routerFlavor, 'traditional')) {
+    const methods: Method[] = []
 
-  if (form.fields.methods) {
-    Object.entries(form.fields.methods).forEach(([key, value]) => {
-      if (value) {
-        methods.push(key as Method)
-      }
-    })
+    if (form.fields.methods) {
+      Object.entries(form.fields.methods).forEach(([key, value]) => {
+        if (value) {
+          methods.push(key as Method)
+        }
+      })
+    }
+
+    return methods
+  } else {
+    console.warn('selectedMethods is only supported for "traditional" router')
+    return []
   }
-
-  return methods
 })
 
 const protocolsArr = computed((): string[] => form.fields.protocols?.split(',') || [])
@@ -753,6 +839,7 @@ const showRoutingRulesWarning = computed((): boolean => {
 
   return !routingRulesEntities.length
 })
+
 const warningMessageRoutingRules = computed((): string[] => {
   if (isProtocolSelected(['tls_passthrough'])) {
     return [getRoutingRuleLabel(RoutingRulesEntities.SNIS)]
@@ -772,8 +859,10 @@ const updateFormValues = (data: Record<string, any>): void => {
   const tags = data?.tags || []
   form.fields.tags = tags?.join(', ') || ''
 
-  form.fields.regex_priority = data?.regex_priority || 0
-  form.fields.path_handling = data?.path_handling || 'v0'
+  if (narrowDownFields(form.fields, props.config.routerFlavor, 'traditional')) {
+    form.fields.regex_priority = data?.regex_priority || 0
+    form.fields.path_handling = data?.path_handling || 'v0'
+  }
   form.fields.preserve_host = typeof data?.preserve_host === 'undefined' ? false : data?.preserve_host
   form.fields.https_redirect_status_code = data?.https_redirect_status_code || 426
 
@@ -790,32 +879,34 @@ const updateFormValues = (data: Record<string, any>): void => {
 
   form.fields.strip_path = typeof data?.strip_path === 'undefined' ? true : data?.strip_path
 
-  if (data?.paths) {
-    form.fields.paths = data.paths
-  }
+  if (narrowDownFields(form.fields, props.config.routerFlavor, 'traditional')) {
+    if (data?.paths) {
+      form.fields.paths = data.paths
+    }
 
-  if (data?.snis) {
-    form.fields.snis = data.snis
-  }
+    if (data?.snis) {
+      form.fields.snis = data.snis
+    }
 
-  if (data?.hosts) {
-    form.fields.hosts = data.hosts
-  }
+    if (data?.hosts) {
+      form.fields.hosts = data.hosts
+    }
 
-  if (data?.methods) {
-    setMethods(data.methods)
-  }
+    if (data?.methods) {
+      setMethods(data.methods)
+    }
 
-  if (data?.headers) {
-    form.fields.headers = formatHeaders(data.headers)
-  }
+    if (data?.headers) {
+      form.fields.headers = formatHeaders(data.headers)
+    }
 
-  if (data?.sources) {
-    form.fields.sources = data.sources
-  }
+    if (data?.sources) {
+      form.fields.sources = data.sources
+    }
 
-  if (data?.destinations) {
-    form.fields.destinations = data.destinations
+    if (data?.destinations) {
+      form.fields.destinations = data.destinations
+    }
   }
 
   // copy form.fields to avoid referencing the original object in originalFields
@@ -826,16 +917,17 @@ const updateFormValues = (data: Record<string, any>): void => {
  * Is the form submit button enabled?
  */
 const isFormValid = computed((): boolean => {
-  const hosts = form.fields.hosts ? !!form.fields.hosts.filter(Boolean).length : null
-  const paths = form.fields.paths ? !!form.fields.paths.filter(Boolean).length : null
-  const headers = form.fields.headers ? form.fields.headers.some(({ header }) => !!header) : null
-  const snis = form.fields.snis ? !!form.fields.snis.filter(Boolean).length : null
-  const destinations = form.fields.destinations ? form.fields.destinations.some(({ ip }) => !!ip) : null
-  const sources = form.fields.sources ? form.fields.sources.some(({ ip }) => !!ip) : null
-  const hasCustomMethod = form.fields.methods?.CUSTOM
-  const methods = hasCustomMethod ? customMethods.value.some(item => !!item) : Object.values(form.fields.methods || {}).includes(true)
+  if (narrowDownFields(form.fields, props.config.routerFlavor, 'traditional')) {
+    const hosts = form.fields.hosts ? !!form.fields.hosts.filter(Boolean).length : null
+    const paths = form.fields.paths ? !!form.fields.paths.filter(Boolean).length : null
+    const headers = form.fields.headers ? form.fields.headers.some(({ header }) => !!header) : null
+    const snis = form.fields.snis ? !!form.fields.snis.filter(Boolean).length : null
+    const destinations = form.fields.destinations ? form.fields.destinations.some(({ ip }) => !!ip) : null
+    const sources = form.fields.sources ? form.fields.sources.some(({ ip }) => !!ip) : null
+    const hasCustomMethod = form.fields.methods?.CUSTOM
+    const methods = hasCustomMethod ? customMethods.value.some(item => !!item) : Object.values(form.fields.methods || {}).includes(true)
 
-  return !!form.fields.protocols && ((isProtocolSelected(['http']) && !!(hosts || methods || paths || headers)) ||
+    return !!form.fields.protocols && ((isProtocolSelected(['http']) && !!(hosts || methods || paths || headers)) ||
     (isProtocolSelected(['https']) && !!(hosts || methods || paths || headers || snis)) ||
     (isProtocolSelected(['grpc']) && !!(hosts || paths || headers)) ||
     (isProtocolSelected(['grpcs', 'wss']) && !!(hosts || paths || headers || snis)) ||
@@ -843,6 +935,10 @@ const isFormValid = computed((): boolean => {
     (isProtocolSelected(['tcp']) && !!(destinations || sources)) ||
     (isProtocolSelected(['tls_passthrough']) && !!snis) ||
     (isProtocolSelected(['ws']) && !!(hosts || paths || headers)))
+  } else {
+    // console.error('TODO')
+    return true
+  }
 })
 const changesExist = computed((): boolean => JSON.stringify(form.fields) !== JSON.stringify(originalFields))
 
@@ -879,54 +975,74 @@ watch(() => form.fields, () => {
 
 const getArrPayload = (arr?: any[]) => arr?.length ? arr : null
 
-const getPayload = computed((): RoutePayload => {
-  const payload: RoutePayload = {
-    service: (form.fields.service_id) ? { id: form.fields.service_id } : null,
-    ...(!props.hideNameField && { name: form.fields.name || null }),
-    paths: getArrPayload(cleanDataArr(RoutingRulesEntities.PATHS, form.fields.paths || [])),
-    snis: getArrPayload(cleanDataArr(RoutingRulesEntities.SNIS, form.fields.snis || [])),
-    hosts: getArrPayload(cleanDataArr(RoutingRulesEntities.HOSTS, form.fields.hosts || [])),
-    methods: null,
-    headers: getHeaders(),
-    sources: getArrPayload(cleanDataArr(RoutingRulesEntities.SOURCES, form.fields.sources || [])),
-    destinations: getArrPayload(cleanDataArr(RoutingRulesEntities.DESTINATIONS, form.fields.destinations || [])),
-    tags: form.fields.tags.split(',')?.map((tag: string) => String(tag || '')
-      .trim())?.filter((tag: string) => tag !== ''),
-    regex_priority: Number(form.fields.regex_priority),
-    path_handling: form.fields.path_handling,
-    strip_path: isProtocolSelected(['grpc', 'gprcs']) ? false : form.fields.strip_path,
-    preserve_host: form.fields.preserve_host,
-    https_redirect_status_code: form.fields.https_redirect_status_code,
-    protocols: form.fields.protocols.split(',') as Protocol[],
-    request_buffering: form.fields.request_buffering,
-    response_buffering: form.fields.response_buffering,
-  }
-
-  if (selectedMethods.value?.length) {
-    payload.methods = [...selectedMethods.value]
-
-    // handle custom method input
-    // add any custom methods from input field, avoid duplicate
-
-    if (selectedMethods.value?.includes('CUSTOM')) {
-      const customMethodIndex = payload.methods.indexOf('CUSTOM')
-      if (customMethodIndex !== -1) {
-        payload.methods.splice(customMethodIndex, 1)
-      }
-
-      customMethods.value.forEach(method => {
-        if (method && payload.methods && !payload.methods?.includes(method)) {
-          payload.methods.push(method.toUpperCase())
-        }
-      })
+const getPayload = computed((): RoutePayload<typeof props.config.routerFlavor> => {
+  if (narrowDownFields(form.fields, props.config.routerFlavor, 'expressions')) {
+    const payload: RoutePayload<typeof props.config.routerFlavor> = {
+      ...(!props.hideNameField && { name: form.fields.name || null }),
+      protocols: form.fields.protocols.split(',') as Protocol[],
+      https_redirect_status_code: form.fields.https_redirect_status_code,
+      strip_path: isProtocolSelected(['grpc', 'gprcs']) ? false : form.fields.strip_path,
+      preserve_host: form.fields.preserve_host,
+      request_buffering: form.fields.request_buffering,
+      response_buffering: form.fields.response_buffering,
+      tags: form.fields.tags.split(',')?.map((tag: string) => String(tag || '')
+        .trim())?.filter((tag: string) => tag !== ''),
+      service: (form.fields.service_id) ? { id: form.fields.service_id } : null,
+      expression: form.fields.expression,
+      priority: Number(form.fields.priority),
     }
+
+    return payload
+  } else {
+    const payload: RoutePayload<typeof props.config.routerFlavor> = {
+      service: (form.fields.service_id) ? { id: form.fields.service_id } : null,
+      ...(!props.hideNameField && { name: form.fields.name || null }),
+      paths: getArrPayload(cleanDataArr(RoutingRulesEntities.PATHS, form.fields.paths || [])),
+      snis: getArrPayload(cleanDataArr(RoutingRulesEntities.SNIS, form.fields.snis || [])),
+      hosts: getArrPayload(cleanDataArr(RoutingRulesEntities.HOSTS, form.fields.hosts || [])),
+      methods: null,
+      headers: getHeaders(),
+      sources: getArrPayload(cleanDataArr(RoutingRulesEntities.SOURCES, form.fields.sources || [])),
+      destinations: getArrPayload(cleanDataArr(RoutingRulesEntities.DESTINATIONS, form.fields.destinations || [])),
+      tags: form.fields.tags.split(',')?.map((tag: string) => String(tag || '')
+        .trim())?.filter((tag: string) => tag !== ''),
+      regex_priority: Number(form.fields.regex_priority),
+      path_handling: form.fields.path_handling,
+      strip_path: isProtocolSelected(['grpc', 'gprcs']) ? false : form.fields.strip_path,
+      preserve_host: form.fields.preserve_host,
+      https_redirect_status_code: form.fields.https_redirect_status_code,
+      protocols: form.fields.protocols.split(',') as Protocol[],
+      request_buffering: form.fields.request_buffering,
+      response_buffering: form.fields.response_buffering,
+    }
+
+    if (selectedMethods.value?.length) {
+      payload.methods = [...selectedMethods.value]
+
+      // handle custom method input
+      // add any custom methods from input field, avoid duplicate
+
+      if (selectedMethods.value?.includes('CUSTOM')) {
+        const customMethodIndex = payload.methods.indexOf('CUSTOM')
+        if (customMethodIndex !== -1) {
+          payload.methods.splice(customMethodIndex, 1)
+        }
+
+        customMethods.value.forEach(method => {
+          if (method && payload.methods && !payload.methods?.includes(method)) {
+            payload.methods.push(method.toUpperCase())
+          }
+        })
+      }
+    }
+
+    return payload
   }
 
-  return payload
 })
 
-const saveFormData = async (payload?: RoutePayload): Promise<void> => {
-  const validPayload: RoutePayload = (payload && isRoutePayloadValid(payload)) ? payload : getPayload.value
+const saveFormData = async (payload?: RoutePayload<typeof props.config.routerFlavor>): Promise<void> => {
+  const validPayload: RoutePayload<typeof props.config.routerFlavor> = (payload && isRoutePayloadValid(payload)) ? payload : getPayload.value
 
   try {
     form.isReadonly = true
@@ -1062,5 +1178,14 @@ defineExpose({ saveFormData, getPayload })
   .k-checkbox {
     display: flex;
   }
+
+  :deep(.form-section-content) {
+    min-width: 0;
+  }
+
+  .expression-editor {
+    min-height: 200px;
+  }
 }
 </style>
+./RouteFormExpressionsEditorLoader.vue

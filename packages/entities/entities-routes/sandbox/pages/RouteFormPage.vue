@@ -1,28 +1,4 @@
 <template>
-  <h2>Konnect API</h2>
-  <RouteForm
-    :config="konnectConfig"
-    :route-id="routeId"
-    @error="onError"
-    @update="onUpdate"
-  >
-    <template #form-actions="{ canSubmit, submit, cancel }">
-      <KButton
-        appearance="secondary"
-        @click="cancel"
-      >
-        Cancel
-      </KButton>
-      <KButton
-        appearance="primary"
-        :disabled="!canSubmit"
-        @click="submit"
-      >
-        Next
-      </KButton>
-    </template>
-  </RouteForm>
-
   <h2>Kong Manager API</h2>
   <RouteForm
     :config="kongManagerConfig"
@@ -80,6 +56,7 @@ const kongManagerConfig = ref<KongManagerRouteFormConfig>({
   workspace: 'default',
   apiBaseUrl: '/kong-manager', // For local dev server proxy
   cancelRoute: { name: 'route-list' },
+  routerFlavor: 'expressions',
 })
 
 const onError = (error: AxiosError) => {

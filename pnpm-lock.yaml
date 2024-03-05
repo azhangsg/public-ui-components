@@ -816,6 +816,9 @@ importers:
       '@kong-ui-public/entities-shared':
         specifier: workspace:^
         version: link:../entities-shared
+      '@kong-ui-public/expressions':
+        specifier: ^
+        version: 0.0.2-pr.1174.0ba26d8a.0(@kong/kongponents@9.0.0-alpha.107)(axios@1.6.7)(monaco-editor@0.21.3)(vue@3.4.20)
     devDependencies:
       '@kong-ui-public/i18n':
         specifier: workspace:^
@@ -829,6 +832,12 @@ importers:
       axios:
         specifier: ^1.6.7
         version: 1.6.7
+      monaco-editor:
+        specifier: 0.21.3
+        version: 0.21.3
+      vite-plugin-monaco-editor:
+        specifier: ^1.1.0
+        version: 1.1.0(monaco-editor@0.21.3)
       vue:
         specifier: ^3.4.19
         version: 3.4.20(typescript@5.3.3)
@@ -2327,6 +2336,35 @@ packages:
       vue: 3.4.20(typescript@5.3.3)
     dev: false
 
+  /@kong-ui-public/core@1.5.5(axios@1.6.7)(vue@3.4.20):
+    resolution: {integrity: sha512-fBlbaA3j/M9n+euyKo36xsQBoEDM2LUmm9hDhC3w592UN3I/9vLb7P0dvXi2q6RbIlBUP7PWImIJCwEx1ulGcA==}
+    peerDependencies:
+      axios: ^1.6.7
+      swrv: ^1.0.4
+      vue: ^3.4.19
+    dependencies:
+      axios: 1.6.7
+      date-fns: 2.30.0
+      vue: 3.4.20(typescript@5.3.3)
+    dev: false
+
+  /@kong-ui-public/expressions@0.0.2-pr.1174.0ba26d8a.0(@kong/kongponents@9.0.0-alpha.107)(axios@1.6.7)(monaco-editor@0.21.3)(vue@3.4.20):
+    resolution: {integrity: sha512-NLXiEotyNkEKdQL1Hlir34UWWJ2fegQYowjMwXnRgtxbSaolEWbv0CR2eCjRRNdUzonXdTHigZRDQZ7Av3Nuyg==}
+    peerDependencies:
+      '@kong/atc-router': 1.6.0-alpha.3
+      '@kong/kongponents': 9.0.0-alpha.105
+      monaco-editor: 0.21.3
+      vue: ^3.4.19
+    dependencies:
+      '@kong-ui-public/core': 1.5.5(axios@1.6.7)(vue@3.4.20)
+      '@kong/kongponents': 9.0.0-alpha.107(axios@1.6.7)(vue-router@4.2.5)(vue@3.4.20)
+      monaco-editor: 0.21.3
+      vue: 3.4.20(typescript@5.3.3)
+    transitivePeerDependencies:
+      - axios
+      - swrv
+    dev: false
+
   /@kong/design-tokens@1.12.10:
     resolution: {integrity: sha512-6IY1H6UMg95BqjU4Xov5sfjsG94G8KadUnf8MawuovbjGAcOh1Avr5Ooq4jEqmFcfjH6q+BjZHgKxO4A6Vt0kA==}
     dev: true
@@ -2417,7 +2455,6 @@ packages:
       vue: 3.4.20(typescript@5.3.3)
       vue-draggable-next: 2.2.1(sortablejs@1.15.2)(vue@3.4.20)
       vue-router: 4.2.5(vue@3.4.20)
-    dev: true
 
   /@kong/swagger-ui-kong-theme-universal@4.3.3(react-dom@17.0.2)(react@17.0.2)(vue-router@4.2.5)(vue@3.4.20):
     resolution: {integrity: sha512-g89NLf7Vu19BJ157fVUkLIrjzTmNE74zGfzktK2rxdZgIUegt4VBDsG8K0MAxDwQELQqSK3kPkamgdD9j1eV3Q==}
@@ -3041,7 +3078,6 @@ packages:
 
   /@popperjs/core@2.11.8:
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
-    dev: true
 
   /@popperjs/core@2.4.0:
     resolution: {integrity: sha512-NMrDy6EWh9TPdSRiHmHH2ye1v5U0gBD7pRYwSwJvomx7Bm4GG04vu63dYiVzebLOx2obPpJugew06xVP0Nk7hA==}
@@ -3893,7 +3929,6 @@ packages:
 
   /@types/resize-observer-browser@0.1.11:
     resolution: {integrity: sha512-cNw5iH8JkMkb3QkCoe7DaZiawbDQEUX8t7iuQaRTyLOyQCR2h+ibBD4GJt7p5yhUHrlOeL7ZtbxNHeipqNsBzQ==}
-    dev: true
 
   /@types/retry@0.12.0:
     resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
@@ -4784,6 +4819,9 @@ packages:
 
   /ajv-formats@2.1.1:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependenciesMeta:
+      ajv:
+        optional: true
     dependencies:
       ajv: 8.12.0
     dev: true
@@ -10287,6 +10325,9 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /monaco-editor@0.21.3:
+    resolution: {integrity: sha512-9N7wATLpi+googstvtm6IKg97vPQ77FDYEpkow5tLriM/VJ0DaTRyUP4UVzcoH7KlPDX+e/rE7/imcOUeGkT6g==}
+
   /mrmime@1.0.1:
     resolution: {integrity: sha512-hzzEagAgDyoU1Q6yg5uI+AorQgdvMCur3FcKf7NhMKWsaYg+RnbTyHRa/9IlLF9rf455MOCtcqqrQQ83pPP7Uw==}
     engines: {node: '>=10'}
@@ -11853,6 +11894,7 @@ packages:
       react: 16.14.0
       scheduler: 0.19.1
     dev: false
+    bundledDependencies: false
 
   /react-dom@17.0.2(react@17.0.2):
     resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
@@ -11957,6 +11999,7 @@ packages:
       object-assign: 4.1.1
       prop-types: 15.8.1
     dev: false
+    bundledDependencies: false
 
   /react@17.0.2:
     resolution: {integrity: sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==}
@@ -14136,7 +14179,6 @@ packages:
       lodash: 4.17.21
       vue: 3.4.20(typescript@5.3.3)
       vue-screen-utils: 1.0.0-beta.13(vue@3.4.20)
-    dev: true
 
   /v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
@@ -14260,6 +14302,14 @@ packages:
     transitivePeerDependencies:
       - rollup
       - supports-color
+    dev: true
+
+  /vite-plugin-monaco-editor@1.1.0(monaco-editor@0.21.3):
+    resolution: {integrity: sha512-IvtUqZotrRoVqwT0PBBDIZPNraya3BxN/bfcNfnxZ5rkJiGcNtO5eAOWWSgT7zullIAEqQwxMU83yL9J5k7gww==}
+    peerDependencies:
+      monaco-editor: '>=0.33.0'
+    dependencies:
+      monaco-editor: 0.21.3
     dev: true
 
   /vite-plugin-vue-devtools@7.0.15(vite@5.1.4)(vue@3.4.20):
@@ -14502,7 +14552,6 @@ packages:
       vue: ^3.2.0
     dependencies:
       vue: 3.4.20(typescript@5.3.3)
-    dev: true
 
   /vue-template-compiler@2.7.14:
     resolution: {integrity: sha512-zyA5Y3ArvVG0NacJDkkzJuPQDF8RFeRlzV2vLeSnhSpieO6LK2OVbdLPi5MPPs09Ii+gMO8nY4S3iKQxBxDmWQ==}

@@ -73,6 +73,7 @@ const slots = useSlots()
 <style lang="scss" scoped>
 fieldset {
   margin: 0;
+  min-width: 0;
   padding: 0;
 }
 

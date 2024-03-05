@@ -85,6 +85,9 @@
       },
       "routingRules": {
         "title": "Routing Rules"
+      },
+      "routingExpression": {
+        "title": "Routing Expression"
       }
     },
     "fields": {
