@@ -1,5 +1,5 @@
 const konnectBaseApiUrl = '/v2/control-planes/{controlPlaneId}/core-entities'
-const KMBaseApiUrl = '/{workspace}'
+const KMBaseApiUrl = ''
 
 export default {
   list: {

@@ -13,9 +13,11 @@
         <KInput
           v-model.trim="fieldsValue[index]"
           :data-testid="`route-form-hosts-input-${index + 1}`"
+          :disabled="disabled"
           :placeholder="t('form.fields.hosts.placeholder')"
         />
         <RoutingRulesEntitiesControls
+          :disabled="disabled"
           :is-add-disabled="index !== fieldsValue.length - 1"
           :routing-rules-entity="RoutingRulesEntities.HOSTS"
           @add="$emit('add')"
@@ -42,6 +44,10 @@ const props = defineProps({
   modelValue: {
     type: Array as PropType<FieldsValue>,
     required: true,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 

@@ -2,22 +2,6 @@
   <SandboxPermissionsControl
     @update="handlePermissionsUpdate"
   />
-  <h2>Konnect API</h2>
-  <RouteList
-    v-if="permissions"
-    :key="key"
-    cache-identifier="konnect"
-    :can-create="permissions.canCreate"
-    :can-delete="permissions.canDelete"
-    :can-edit="permissions.canEdit"
-    :can-retrieve="permissions.canRetrieve"
-    :config="konnectConfig"
-    title="Routes"
-    @copy:error="onCopyIdError"
-    @copy:success="onCopyIdSuccess"
-    @delete:success="onDeleteRouteSuccess"
-    @error="onError"
-  />
 
   <h2>Kong Manager API</h2>
   <RouteList

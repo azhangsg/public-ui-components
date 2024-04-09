@@ -4,6 +4,7 @@
       appearance="tertiary"
       class="remove-button"
       :data-testid="`remove-${routingRulesEntity}`"
+      :disabled="disabled"
       @click="$emit('remove')"
     >
       <KIcon icon="trash" />
@@ -11,7 +12,7 @@
     <KButton
       appearance="tertiary"
       :data-testid="`add-${routingRulesEntity}`"
-      :disabled="isAddDisabled"
+      :disabled="disabled || isAddDisabled"
       @click="$emit('add')"
     >
       <KIcon
@@ -32,6 +33,10 @@ defineProps({
     required: true,
   },
   isAddDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
     type: Boolean,
     default: false,
   },

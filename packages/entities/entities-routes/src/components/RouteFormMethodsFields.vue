@@ -14,6 +14,7 @@
           <KInputSwitch
             v-model="fieldsValue[method]"
             :data-testid="`${method.toLowerCase()}-method-toggle`"
+            :disabled="disabled"
           />
           <KBadge
             :appearance="Object.values(BadgeMethodAppearances).includes(method.toLowerCase() as BadgeMethodAppearance) ? method.toLowerCase() as BadgeMethodAppearance : 'custom'"
@@ -26,6 +27,7 @@
         appearance="tertiary"
         class="remove-button"
         data-testid="remove-methods"
+        :disabled="disabled"
         @click="$emit('remove')"
       >
         <template #icon>
@@ -51,9 +53,11 @@
           <KInput
             v-model.trim="customMethodsValue[index]"
             :data-testid="`route-form-custom-method-input-${index + 1}`"
+            :disabled="disabled"
             :placeholder="t('form.fields.methods.custom.placeholder')"
           />
           <RoutingRulesEntitiesControls
+            :disabled="disabled"
             :is-add-disabled="index !== customMethodsValue.length - 1"
             :routing-rules-entity="RoutingRulesEntities.CUSTOM_METHOD"
             @add="customMethodsValue.push('')"
@@ -88,6 +92,10 @@ const props = defineProps({
   customMethods: {
     type: Array as PropType<Array<string>>,
     required: true,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 

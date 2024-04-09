@@ -13,17 +13,20 @@
         <KInput
           v-model.trim="fieldsValue[index].ip"
           :data-testid="`route-form-destinations-ip-input-${index + 1}`"
+          :disabled="disabled"
           :placeholder="t('form.fields.destinations.ip.placeholder')"
         />
         <KInput
           v-model.number="fieldsValue[index].port"
           :data-testid="`route-form-destinations-port-input-${index + 1}`"
+          :disabled="disabled"
           max="65535"
           min="0"
           :placeholder="t('form.fields.destinations.port.placeholder')"
           type="number"
         />
         <RoutingRulesEntitiesControls
+          :disabled="disabled"
           :is-add-disabled="index !== fieldsValue.length - 1"
           :routing-rules-entity="RoutingRulesEntities.DESTINATIONS"
           @add="$emit('add')"
@@ -51,6 +54,10 @@ const props = defineProps({
   modelValue: {
     type: Array as PropType<FieldsValue>,
     required: true,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 
