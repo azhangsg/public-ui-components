@@ -31,6 +31,7 @@ interface FetcherOptions {
   hasTrendAccess: Ref<boolean>
   refreshInterval: number
   queryFn: AnalyticsBridge['queryFn']
+  evaluateFeatureFlagFn: AnalyticsBridge['evaluateFeatureFlagFn']
   abortController?: AbortController
 }
 
@@ -46,11 +47,15 @@ export const defaultFetcherDefs = (opts: FetcherOptions) => {
     refreshInterval,
     abortController,
     queryFn,
+    evaluateFeatureFlagFn,
   } = opts
 
   if (dimensionFilterValue && !dimension) {
     throw new Error('Must provide a dimension if filtering by a value')
   }
+
+  // The feature flag client is guaranteed to be initialized by the time the code gets to this place.
+  const queryAverages = evaluateFeatureFlagFn('MA-2527-analytics-sku-config-endpoint', false)
 
   const singleEntityQuery = !!(dimension && dimensionFilterValue)
   const multiEntityQuery = !!(dimension && !dimensionFilterValue)
@@ -100,7 +105,7 @@ export const defaultFetcherDefs = (opts: FetcherOptions) => {
 
   const latencyMetricFetcherOptions: MetricFetcherOptions = {
     metrics: [
-      'response_latency_p99',
+      queryAverages ? 'response_latency_average' : 'response_latency_p99',
     ],
 
     // To keep single-entity queries consistent, don't bother querying the dimension for latency

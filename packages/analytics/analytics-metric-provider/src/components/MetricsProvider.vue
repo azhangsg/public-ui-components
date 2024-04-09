@@ -54,14 +54,17 @@ if (props.dimension && queryableExploreDimensions.findIndex(x => x === props.dim
 const queryBridge: AnalyticsBridge | undefined = inject(INJECT_QUERY_PROVIDER)
 
 let queryFn: AnalyticsBridge['queryFn']
+let evaluateFeatureFlagFn: AnalyticsBridge['evaluateFeatureFlagFn']
 
 if (!queryBridge) {
   console.warn('Analytics dashboards require a query bridge supplied via provide / inject.')
   console.warn("Please ensure your application has a query bridge provided under the key 'analytics-query-provider', as described in")
   console.warn('https://github.com/Kong/public-ui-components/blob/main/packages/analytics/analytics-metric-provider/README.md#requirements')
   queryFn = () => Promise.reject(new Error('Query bridge required'))
+  evaluateFeatureFlagFn = (_key, defaultValue) => defaultValue
 } else {
   queryFn = queryBridge.queryFn
+  evaluateFeatureFlagFn = queryBridge.evaluateFeatureFlagFn
 }
 
 const analyticsConfigStore = useAnalyticsConfigStore()
@@ -119,6 +122,7 @@ const {
   hasTrendAccess,
   refreshInterval: props.refreshInterval,
   queryFn,
+  evaluateFeatureFlagFn,
   abortController: props.abortController,
 })
 
